@@ -1,0 +1,14 @@
+spring:
+  profiles:
+    include:
+      - minio
+      - redisson
+      - mybatis
+  application:
+    name: qi-suo-service
+
+
+jwt:
+  accessExpire: 86400 # 24小时（秒）
+  refreshExpire: 604800 # 7天（秒）
+  secret-key: Y6mQMQ+jDKiAp1jwzAqLa7fNp0GzMx54QYpqDIpdZe4=

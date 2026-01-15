@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="qi-suo-common-security" />
+        <module name="qi-suo-test" />
+        <module name="qi-suo-common-redisson" />
+        <module name="qi-suo-common-mybatis" />
+        <module name="qi-suo-common-core" />
+        <module name="qi-suo-pojo" />
+        <module name="qi-suo-common-minio" />
+        <module name="qi-suo-service" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="qi-suo-service-app" target="17" />
+      <module name="qi-suo-service-security_" target="17" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="qi-suo-common" options="" />
+      <module name="qi-suo-common-core" options="-parameters" />
+      <module name="qi-suo-common-minio" options="-parameters" />
+      <module name="qi-suo-common-mybatis" options="-parameters" />
+      <module name="qi-suo-common-redisson" options="-parameters" />
+      <module name="qi-suo-common-security" options="-parameters" />
+      <module name="qi-suo-pojo" options="-parameters" />
+      <module name="qi-suo-service" options="-parameters" />
+      <module name="qi-suo-service-app" options="-parameters" />
+      <module name="qi-suo-service-security_" options="-parameters" />
+      <module name="qi-suo-test" options="-parameters" />
+    </option>
+  </component>
+</project>
