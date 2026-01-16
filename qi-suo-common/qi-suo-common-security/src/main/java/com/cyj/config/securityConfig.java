@@ -73,7 +73,7 @@ public class securityConfig {
 //                .formLogin(Customizer.withDefaults())
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 基于token，不需要session
                 .authorizeHttpRequests((authz) -> authz
-                        .requestMatchers("/health","/api/user/login/**").permitAll() // 放行api
+                        .requestMatchers("/health","/*/*/login/**").permitAll() // 放行api
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
                         .anyRequest().authenticated()
                 );

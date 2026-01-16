@@ -6,6 +6,7 @@ import lombok.Data;
 
 import com.baomidou.mybatisplus.annotation.*;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -18,6 +19,7 @@ import java.io.Serializable;
 @TableName("user_role")
 public class UserRole implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**

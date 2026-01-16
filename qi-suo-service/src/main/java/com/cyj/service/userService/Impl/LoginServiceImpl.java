@@ -1,11 +1,13 @@
-package com.cyj.service.Impl;
+package com.cyj.service.userService.Impl;
 
 
 import com.cyj.common.Result;
 import com.cyj.dto.UserLoginDTO;
 import com.cyj.mapper.UserMapper;
-import com.cyj.service.UserService;
+import com.cyj.service.userService.UserService;
 import com.cyj.utils.JwtUtil;
+import com.cyj.utils.RedissonUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,18 +17,24 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
-@Service
+@Service("userLoginServiceImpl")
 @Slf4j
-public class UserServiceImpl implements UserService {
+public class LoginServiceImpl implements UserService {
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private RedissonUtil redissonUtil;
+    @Autowired
+    private HttpServletRequest request;
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
     private UserMapper userMapper;
     @Override
     public Result<String> userLogin(UserLoginDTO userLoginDTO) {
+
 
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(userLoginDTO.getUsername(), userLoginDTO.getPassword()));
@@ -50,11 +58,13 @@ public class UserServiceImpl implements UserService {
         Map<String,Object> refreshclaims = new HashMap<>();
         refreshclaims.put("username",userLoginDTO.getUsername());
         String refreshToken = jwtUtil.generaterefreshToken(refreshclaims);
+
         //将刷新令牌存入缓存
+        String key = "toke" + ":user:" + userLoginDTO.getUsername();
+        redissonUtil.setValue(key, refreshToken,7,TimeUnit.DAYS);
 
 
-
-
+        //返回访问令牌
         return Result.success(accessToken);
     }
 }

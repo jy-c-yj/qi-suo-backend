@@ -4,7 +4,7 @@ package com.cyj.controller.user;
 import com.cyj.common.Result;
 
 import com.cyj.dto.UserLoginDTO;
-import com.cyj.service.UserService;
+import com.cyj.service.userService.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

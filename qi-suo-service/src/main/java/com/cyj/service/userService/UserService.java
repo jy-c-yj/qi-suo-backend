@@ -1,4 +1,4 @@
-package com.cyj.service;
+package com.cyj.service.userService;
 
 import com.cyj.common.Result;
 import com.cyj.dto.UserLoginDTO;

@@ -6,6 +6,8 @@ import lombok.Data;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -19,6 +21,7 @@ import java.util.Date;
 @TableName("role")
 public class Role implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
