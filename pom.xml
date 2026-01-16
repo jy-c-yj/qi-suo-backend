@@ -37,6 +37,7 @@
         <mybatis-jsqlparser>3.5.9</mybatis-jsqlparser>
         <mysql-jdbc>8.0.31</mysql-jdbc>
         <druid>1.2.20</druid>
+        <kaptcha>2.3.2</kaptcha>
     </properties>
 
     <dependencyManagement>
@@ -138,6 +139,13 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-test</artifactId>
                 <version>3.3.5</version>
+            </dependency>
+
+            <!-- Kaptcha验证码依赖（稳定版2.3.2） -->
+            <dependency>
+                <groupId>com.github.penggle</groupId>
+                <artifactId>kaptcha</artifactId>
+                <version>${kaptcha}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

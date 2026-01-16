@@ -37,8 +37,6 @@ public class securityConfig {
 //    public UserDetailsService userDetailsService() {
 //        // 创建基于内存的用户信息管理器
 //        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
-//
-//
 //        manager.createUser(
 //                // 创建UserDetails对象，用于管理用户名、用户密码、用户角色、用户权限等内容
 //                User.builder().username("admin").password(passwordEncoder().encode("admin")).roles("admin").build()
@@ -73,7 +71,7 @@ public class securityConfig {
 //                .formLogin(Customizer.withDefaults())
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 基于token，不需要session
                 .authorizeHttpRequests((authz) -> authz
-                        .requestMatchers("/health","/*/*/login/**").permitAll() // 放行api
+                        .requestMatchers("/health","/*/*/login/**","/api/kaptcha/base64/**").permitAll() // 放行api
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
                         .anyRequest().authenticated()
                 );
