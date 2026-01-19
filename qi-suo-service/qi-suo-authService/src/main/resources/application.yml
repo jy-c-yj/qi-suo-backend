@@ -1,0 +1,18 @@
+server:
+  port:
+    8082
+spring:
+  profiles:
+    include:
+      - mybatis
+  application:
+    name: qi-suo-auth
+  cloud:
+    nacos:
+      server-addr: 127.0.0.1:8848
+
+
+jwt:
+  accessExpire: 86400 # 24小时（秒）
+  refreshExpire: 604800 # 7天（秒）
+  secret-key: Y6mQMQ+jDKiAp1jwzAqLa7fNp0GzMx54QYpqDIpdZe4=

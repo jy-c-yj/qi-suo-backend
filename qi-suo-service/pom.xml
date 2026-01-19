@@ -10,6 +10,14 @@
     </parent>
 
     <artifactId>qi-suo-service</artifactId>
+    <packaging>pom</packaging>
+    <modules>
+        <module>qi-suo-authService</module>
+        <module>qi-suo-userService</module>
+        <module>qi-suo-adminService</module>
+        <module>qi-suo-merchantService</module>
+        <module>qi-suo-fileService</module>
+    </modules>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -23,43 +31,44 @@
             <artifactId>qi-suo-common-core</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+
         <dependency>
             <groupId>com.cyj</groupId>
             <artifactId>qi-suo-common-security</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-        <dependency>
-            <groupId>com.cyj</groupId>
-            <artifactId>qi-suo-common-mybatis</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>com.cyj</groupId>-->
+<!--            <artifactId>qi-suo-common-mybatis</artifactId>-->
+<!--            <version>1.0-SNAPSHOT</version>-->
+<!--        </dependency>-->
+
         <dependency>
             <groupId>com.cyj</groupId>
             <artifactId>qi-suo-common-redisson</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.cyj</groupId>-->
-<!--            <artifactId>qi-suo-common-minio</artifactId>-->
-<!--            <version>1.0-SNAPSHOT</version>-->
-<!--        </dependency>-->
 
         <dependency>
             <groupId>com.cyj</groupId>
             <artifactId>qi-suo-pojo</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
+        <!-- 服务注册/发现 -->
         <dependency>
-            <groupId>com.github.penggle</groupId>
-            <artifactId>kaptcha</artifactId>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
-
+        <!-- 负载均衡 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

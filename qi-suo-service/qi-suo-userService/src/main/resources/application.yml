@@ -1,0 +1,15 @@
+server:
+  port:
+    8085
+spring:
+  profiles:
+    include:
+      - redisson
+      - mybatis
+  application:
+    name: qi-suo-user
+  cloud:
+    nacos:
+      server-addr: 127.0.0.1:8848
+
+

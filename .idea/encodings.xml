@@ -8,12 +8,18 @@
     <file url="file://$PROJECT_DIR$/qi-suo-common/qi-suo-common-security/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-common/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-common/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/qi-suo-gateway/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-pojo/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-pojo/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-rides/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-rides/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/qi-suo-service/qi-suo-adminService/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/qi-suo-service/qi-suo-authService/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/qi-suo-service/qi-suo-fileService/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/qi-suo-service/qi-suo-merchantService/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-service/qi-suo-service-app/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-service/qi-suo-service-security/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/qi-suo-service/qi-suo-userService/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-service/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-test/src/main/java" charset="UTF-8" />

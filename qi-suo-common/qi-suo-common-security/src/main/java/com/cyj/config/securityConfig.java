@@ -71,11 +71,11 @@ public class securityConfig {
 //                .formLogin(Customizer.withDefaults())
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 基于token，不需要session
                 .authorizeHttpRequests((authz) -> authz
-                        .requestMatchers("/health","/*/*/login/**","/api/kaptcha/**").permitAll() // 放行api
+                        .requestMatchers("/health","/*/*/*/login/**","/api/auth/kaptcha/**").permitAll() // 放行api
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
                         .anyRequest().authenticated()
                 );
-        httpSecurity.cors(config -> config.configurationSource(corsConfigurationSource()));
+        //httpSecurity.cors(config -> config.configurationSource(corsConfigurationSource()));
         return httpSecurity.build();
     }
 }

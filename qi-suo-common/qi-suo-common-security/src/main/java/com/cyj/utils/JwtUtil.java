@@ -21,11 +21,11 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "jwt")
 public class JwtUtil {
 
-    private String secretKey;
+    private String secretKey = "Default";
     //刷新令牌过期时间 7d
-    private String refreshExpire;
+    private String refreshExpire = "Default";
     //访问令牌过期时间 24h
-    private String accessExpire;
+    private String accessExpire = "Default";
 
     private SecretKey key;
 
