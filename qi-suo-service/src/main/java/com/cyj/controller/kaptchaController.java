@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
  */
 
 @RestController
-@RequestMapping("/api/kaptcha/base64")
+@RequestMapping("/api/kaptcha")
 @Slf4j
 public class kaptchaController {
     @Autowired
@@ -49,7 +49,7 @@ public class kaptchaController {
             //将文本存入redis
             String key = "kaptcha:" + UUID.randomUUID();
             //设置过期时间
-            redissonUtil.setValue(key, capText, 9999, TimeUnit.SECONDS);
+            redissonUtil.setValue(key, capText, 60, TimeUnit.SECONDS);
             kaptchaDVO.setBase64Image(base64Image);
             kaptchaDVO.setCaptchaID(key);
         } catch (Exception e) {
@@ -63,9 +63,13 @@ public class kaptchaController {
     @PostMapping("/verify")
     public Result<String> verify(@RequestBody KaptchaDTO kaptchaDTO) {
         String key = kaptchaDTO.getCaptchaID();
-        String inputCode = kaptchaDTO.getInputCode();
+        //获取用户输入的验证码，并转换为小写
+        String inputCode = kaptchaDTO.getInputCode().toLowerCase();
         //从redis获取验证码文本
         String captchatxt = redissonUtil.getValue(key);
+        //转换为小写
+        captchatxt = captchatxt.toLowerCase();
+
 
         if (inputCode == null || inputCode.trim().isEmpty()) {
             return Result.error("验证码不能为空");
