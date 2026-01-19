@@ -1,8 +1,11 @@
 package com.cyj.service.userService.Impl;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cyj.common.Result;
 import com.cyj.dto.UserLoginDTO;
+import com.cyj.dvo.AccessTokenDVO;
+import com.cyj.entity.User;
 import com.cyj.mapper.UserMapper;
 import com.cyj.service.userService.UserService;
 import com.cyj.utils.JwtUtil;
@@ -30,7 +33,7 @@ public class LoginServiceImpl implements UserService {
     @Autowired
     private UserMapper userMapper;
     @Override
-    public Result<String> userLogin(UserLoginDTO userLoginDTO) {
+    public Result<AccessTokenDVO> userLogin(UserLoginDTO userLoginDTO) {
 
 
         Authentication authentication = authenticationManager
@@ -45,23 +48,31 @@ public class LoginServiceImpl implements UserService {
             Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
             authorities.forEach(grantedAuthority -> roles.add(grantedAuthority.getAuthority()));
         }
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("username", userLoginDTO.getUsername());
+        User user = userMapper.selectOne(queryWrapper);
 
         //生成访问令牌
         Map<String,Object> accessclaims = new HashMap<>();
-        accessclaims.put("username",userLoginDTO.getUsername());
+        accessclaims.put("id",user.getId().toString());
         accessclaims.put("roles", roles);
         String accessToken = jwtUtil.generateAccessToken(accessclaims);
         //生成刷新令牌
         Map<String,Object> refreshclaims = new HashMap<>();
-        refreshclaims.put("username",userLoginDTO.getUsername());
+        refreshclaims.put("id",user.getId().toString());
+        refreshclaims.put("roles", roles);
         String refreshToken = jwtUtil.generaterefreshToken(refreshclaims);
 
         //将刷新令牌存入缓存
         String key = "toke" + ":user:" + userLoginDTO.getUsername();
         redissonUtil.setValue(key, refreshToken,7,TimeUnit.DAYS);
 
+        AccessTokenDVO accessTokenDVO = AccessTokenDVO.builder()
+                .access_token(accessToken)
+                .refresh_token_key(key)
+                .build();
 
         //返回访问令牌
-        return Result.success(accessToken);
+        return Result.success(accessTokenDVO);
     }
 }

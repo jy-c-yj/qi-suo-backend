@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cyj.common.Result;
 import com.cyj.dto.MerchantLoginDTO;
 import com.cyj.dto.UserLoginDTO;
+import com.cyj.dvo.AccessTokenDVO;
 import com.cyj.entity.Merchant;
 import com.cyj.mapper.MerchantMapper;
 import com.cyj.mapper.UserMapper;
@@ -38,7 +39,7 @@ public class LoginServiceImpl implements MerchantService {
     private MerchantMapper merchantMapper;
 
     @Override
-    public Result<String> merchantLogin(MerchantLoginDTO merchantLoginDTO) {
+    public Result<AccessTokenDVO> merchantLogin(MerchantLoginDTO merchantLoginDTO) {
 
 
 
@@ -60,25 +61,26 @@ public class LoginServiceImpl implements MerchantService {
 
         //生成访问令牌
         Map<String,Object> accessClaims = new HashMap<>();
-        accessClaims.put("MerchantId",merchant.getMerchantId());
-        accessClaims.put("ShopName",merchant.getShopName());
-        accessClaims.put("MerchantName",merchantLoginDTO.getMerchantName());
+        accessClaims.put("id",merchant.getMerchantId().toString());
         accessClaims.put("roles", roles);
         String accessToken = jwtUtil.generateAccessToken(accessClaims);
 
         //生成刷新令牌
         Map<String,Object> refreshClaims = new HashMap<>();
-        refreshClaims.put("MerchantId",merchant.getMerchantId());
-        refreshClaims.put("ShopName",merchant.getShopName());
-        refreshClaims.put("MerchantName",merchantLoginDTO.getMerchantName());
+        refreshClaims.put("id",merchant.getMerchantId().toString());
+        refreshClaims.put("roles", roles);
         String refreshToken = jwtUtil.generaterefreshToken(refreshClaims);
 
         //将刷新令牌存入缓存
         String key = "toke" + ":merchant:" + merchant.getMerchantName();
         redissonUtil.setValue(key, refreshToken,7,TimeUnit.DAYS);
 
+        AccessTokenDVO accessTokenDVO = AccessTokenDVO.builder()
+                .access_token(accessToken)
+                .refresh_token_key(key)
+                .build();
 
         //返回访问令牌
-        return Result.success(accessToken);
+        return Result.success(accessTokenDVO);
     }
 }

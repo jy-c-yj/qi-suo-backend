@@ -64,7 +64,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 roles.add(roleMapper.selectById(userRole.getRoleId()));
             });
 
-            loginUserDetails.setAuthorities(roles.stream().map(role -> new SimpleGrantedAuthority(role.getRoleName())).toList());
+            loginUserDetails.setAuthorities(roles.stream().map(role -> new SimpleGrantedAuthority(role.getRoleCode())).toList());
 
             loginUserDetails.setPassword(user.getPassword());
             loginUserDetails.setUsername(user.getUsername());

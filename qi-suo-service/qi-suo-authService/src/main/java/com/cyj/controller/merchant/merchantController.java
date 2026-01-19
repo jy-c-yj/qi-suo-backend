@@ -3,6 +3,7 @@ package com.cyj.controller.merchant;
 import com.cyj.common.Result;
 import com.cyj.dto.MerchantLoginDTO;
 import com.cyj.dto.UserLoginDTO;
+import com.cyj.dvo.AccessTokenDVO;
 import com.cyj.service.merchantService.MerchantService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,7 @@ public class merchantController {
     MerchantService merchantService;
 
     @PostMapping("/login")
-    public Result<String> login(@RequestBody MerchantLoginDTO merchantLoginDTO) {
+    public Result<AccessTokenDVO> login(@RequestBody MerchantLoginDTO merchantLoginDTO) {
 
         return merchantService.merchantLogin(merchantLoginDTO);
 

@@ -1,9 +1,12 @@
 package com.cyj.service.adminService.Impl;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cyj.common.Result;
 import com.cyj.dto.AdminLoginDTO;
 import com.cyj.dto.UserLoginDTO;
+import com.cyj.dvo.AccessTokenDVO;
+import com.cyj.entity.Admin;
 import com.cyj.mapper.AdminMapper;
 import com.cyj.mapper.UserMapper;
 import com.cyj.service.adminService.AdminService;
@@ -34,9 +37,11 @@ public class LoginServiceImpl implements AdminService {
     private HttpServletRequest request;
     @Autowired
     private AuthenticationManager authenticationManager;
+    @Autowired
+    private AdminMapper adminMapper;
 
     @Override
-    public Result<String> adminLogin(AdminLoginDTO adminLoginDTO) {
+    public Result<AccessTokenDVO> adminLogin(AdminLoginDTO adminLoginDTO) {
 
         String url = request.getRequestURI();
 
@@ -53,23 +58,33 @@ public class LoginServiceImpl implements AdminService {
             authorities.forEach(grantedAuthority -> roles.add(grantedAuthority.getAuthority()));
         }
 
+        QueryWrapper<Admin> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("username", adminLoginDTO.getUsername());
+        Admin admin = adminMapper.selectOne(queryWrapper);
+
         //生成访问令牌
-        Map<String,Object> accessclaims = new HashMap<>();
-        accessclaims.put("username",adminLoginDTO.getUsername());
-        accessclaims.put("roles", roles);
-        String accessToken = jwtUtil.generateAccessToken(accessclaims);
+        Map<String,Object> accessClaims = new HashMap<>();
+        accessClaims.put("id",admin.getAdminId().toString());
+        accessClaims.put("roles", roles);
+        String accessToken = jwtUtil.generateAccessToken(accessClaims);
+
 
         //生成刷新令牌
-        Map<String,Object> refreshclaims = new HashMap<>();
-        refreshclaims.put("username",adminLoginDTO.getUsername());
-        String refreshToken = jwtUtil.generaterefreshToken(refreshclaims);
+        Map<String,Object> refreshClaims = new HashMap<>();
+        refreshClaims.put("id",admin.getAdminId().toString());
+        refreshClaims.put("roles", roles);
+        String refreshToken = jwtUtil.generaterefreshToken(refreshClaims);
 
         //将刷新令牌存入缓存
         String key = "toke" + ":admin:" + adminLoginDTO.getUsername();
         redissonUtil.setValue(key, refreshToken,7,TimeUnit.DAYS);
 
+        AccessTokenDVO accessTokenDVO = AccessTokenDVO.builder()
+                .access_token(accessToken)
+                .refresh_token_key(key)
+                .build();
 
         //返回访问令牌
-        return Result.success(accessToken);
+        return Result.success(accessTokenDVO);
     }
 }

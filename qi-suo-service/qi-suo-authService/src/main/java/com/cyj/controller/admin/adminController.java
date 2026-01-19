@@ -4,6 +4,7 @@ package com.cyj.controller.admin;
 import com.cyj.common.Result;
 import com.cyj.dto.AdminLoginDTO;
 import com.cyj.dto.UserLoginDTO;
+import com.cyj.dvo.AccessTokenDVO;
 import com.cyj.service.adminService.AdminService;
 import com.cyj.service.userService.UserService;
 
@@ -24,7 +25,7 @@ public class adminController {
     AdminService adminService;
 
     @PostMapping("/login")
-    public Result<String> login(@RequestBody AdminLoginDTO adminLoginDTO) {
+    public Result<AccessTokenDVO> login(@RequestBody AdminLoginDTO adminLoginDTO) {
 
         return adminService.adminLogin(adminLoginDTO);
 

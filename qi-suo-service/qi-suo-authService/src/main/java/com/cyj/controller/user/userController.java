@@ -4,6 +4,7 @@ package com.cyj.controller.user;
 import com.cyj.common.Result;
 
 import com.cyj.dto.UserLoginDTO;
+import com.cyj.dvo.AccessTokenDVO;
 import com.cyj.service.userService.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,7 @@ public class userController {
     UserService userService;
 
     @PostMapping("/login")
-    public Result<String> login(@RequestBody UserLoginDTO userLoginDTO) {
+    public Result<AccessTokenDVO> login(@RequestBody UserLoginDTO userLoginDTO) {
 
         return userService.userLogin(userLoginDTO);
 
