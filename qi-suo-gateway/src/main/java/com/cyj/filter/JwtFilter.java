@@ -36,7 +36,7 @@ public class JwtFilter implements WebFilter {
         String token = headers.getFirst("Authorization-token");
         String url = exchange.getRequest().getURI().getPath();
 
-        if(token == null && WhitelistURL.Refresh_Token_Url.equals(url)) {
+        if(token == null || WhitelistURL.Refresh_Token_Url.equals(url)) {
             //登陆操作，放行
             return chain.filter(exchange);
         }

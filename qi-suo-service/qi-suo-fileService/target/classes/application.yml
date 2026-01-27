@@ -6,7 +6,7 @@ spring:
     include:
       - minio
   application:
-    name: qi-suo-fileService
+    name: qi-suo-file
   cloud:
     nacos:
       server-addr: 127.0.0.1:8848
