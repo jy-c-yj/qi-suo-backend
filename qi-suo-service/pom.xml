@@ -69,6 +69,17 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
+        <!-- 远程调用 -->
+        <dependency>
+            <groupId>com.cyj</groupId>
+            <artifactId>qi-suo-common-feign</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- 熔断限流 -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

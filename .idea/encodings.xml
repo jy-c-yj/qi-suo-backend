@@ -2,6 +2,7 @@
 <project version="4">
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/qi-suo-common/qi-suo-common-core/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/qi-suo-common/qi-suo-common-feign/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-common/qi-suo-common-minio/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-common/qi-suo-common-mybatis/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/qi-suo-common/qi-suo-common-redisson/src/main/java" charset="UTF-8" />

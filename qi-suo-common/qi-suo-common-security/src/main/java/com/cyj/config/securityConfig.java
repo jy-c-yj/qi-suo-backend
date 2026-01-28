@@ -3,6 +3,8 @@ package com.cyj.config;
 
 
 import com.cyj.common.WhitelistURL;
+import com.cyj.filter.authFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,6 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -26,6 +29,9 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class securityConfig {
+
+    @Autowired
+    private authFilter authFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -74,12 +80,14 @@ public class securityConfig {
                                 "/health",
                                 "/*/*/*/login/**",
                                 "/api/auth/kaptcha/**",
+                                "/api/*/test/**",
                                 WhitelistURL.Refresh_Token_Url,
                                 WhitelistURL.File_Upload_Url,
                                 WhitelistURL.User_Register_Url).permitAll() // 放行api
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
                         .anyRequest().authenticated()
                 );
+        httpSecurity.addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
         //httpSecurity.cors(config -> config.configurationSource(corsConfigurationSource()));
         return httpSecurity.build();
     }

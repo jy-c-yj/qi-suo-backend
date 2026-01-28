@@ -6,8 +6,9 @@ spring:
     include:
       - redisson
       - mybatis
+      - feign
   application:
-    name: qi-suo-adminService
+    name: qi-suo-admin
   cloud:
     nacos:
       server-addr: 127.0.0.1:8848

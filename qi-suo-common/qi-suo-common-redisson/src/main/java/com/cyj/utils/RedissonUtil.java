@@ -240,6 +240,8 @@ public class RedissonUtil {
         return redissonClient.getList(listName);
     }
 
+
+
     /**
      * 添加到List
      */

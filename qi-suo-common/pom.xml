@@ -17,6 +17,7 @@
         <module>qi-suo-common-minio</module>
         <module>qi-suo-common-core</module>
         <module>qi-suo-common-mybatis</module>
+        <module>qi-suo-common-feign</module>
     </modules>
 
     <properties>
