@@ -14,8 +14,8 @@ spring:
             retryer:  feign.Retryer.Default #重试器全类名
 #            request-interceptors:
 #              - com.cyj.interceptor.UserServiceOpenFeignClientInterceptor
-#          Service-product: #客户端名称，仅对一个客户端生效
-#            #超时配置
+#          qi-suo-admin: #客户端名称，仅对一个客户端生效
+#            #超时配置qi-suo-admin
 #            read-timeout: 2000 #读取超时
 #            connect-timeout: 2000 #连接超时
 #            logger-level: full #日志开启

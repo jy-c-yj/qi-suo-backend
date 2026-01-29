@@ -81,6 +81,8 @@ public class securityConfig {
                                 "/*/*/*/login/**",
                                 "/api/auth/kaptcha/**",
                                 "/api/*/test/**",
+                                "/api/admin/image/getCarouselImageList",
+                                "/api/admin/image/getNowHomeBackGroundImage",
                                 WhitelistURL.Refresh_Token_Url,
                                 WhitelistURL.File_Upload_Url,
                                 WhitelistURL.User_Register_Url).permitAll() // 放行api

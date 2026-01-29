@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 import lombok.Data;
@@ -68,11 +69,11 @@ public class HomeBackgroundImage implements Serializable {
      * 创建时间
      */
     @TableField("created_time")
-    private Date createdTime;
+    private LocalDateTime createdTime;
 
     /**
      * 更新时间
      */
     @TableField("updated_time")
-    private Date updatedTime;
+    private LocalDateTime updatedTime;
 }

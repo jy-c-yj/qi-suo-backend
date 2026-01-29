@@ -1,0 +1,31 @@
+spring:
+  cloud:
+    openfeign:
+      client:
+        config:
+          default: #默认配置
+            read-timeout: 10000
+            connect-timeout: 10000
+          qi-suo-file: #客户端名称，仅对一个客户端生效
+            #超时配置
+            read-timeout: 2000 #读取超时
+            connect-timeout: 2000 #连接超时
+            logger-level: full #日志开启
+            retryer:  feign.Retryer.Default #重试器全类名
+#            request-interceptors:
+#              - com.cyj.interceptor.UserServiceOpenFeignClientInterceptor
+          qi-suo-admin: #客户端名称，仅对一个客户端生效
+            #超时配置
+            read-timeout: 2000 #读取超时
+            connect-timeout: 2000 #连接超时
+            logger-level: full #日志开启
+            retryer: feign.Retryer.Default #重试器全类名
+#            request-interceptors:
+#              - com.cyj.interceptor.UserServiceOpenFeignClientInterceptor
+feign:
+  sentinel:
+    enabled: true
+
+logging:
+  level:
+    com.cyj.feign.ProductFeignClient: debug
