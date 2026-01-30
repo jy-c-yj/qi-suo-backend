@@ -51,25 +51,21 @@ public class AdminDVO implements Serializable {
     /**
      * 创建时间
      */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
     /**
      * 创建人
      */
-    @TableField("create_by")
     private String createBy;
 
     /**
      * 更新人
      */
-    @TableField("update_by")
     private String updateBy;
 
 }

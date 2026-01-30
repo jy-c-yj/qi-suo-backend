@@ -80,7 +80,7 @@ public class Admin implements Serializable {
      * 是否删除：0-否，1-是
      */
     @TableField("is_deleted")
-    @TableLogic
+//    @TableLogic
     private Integer isDeleted;
 
     // 可以添加一些常量定义，便于代码中使用

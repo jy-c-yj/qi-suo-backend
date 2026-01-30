@@ -2,6 +2,10 @@ package com.cyj.constants;
 
 public  class RoleConstants {
     /**
+     * 系统管理员
+     */
+    public static final String SystemADMIN = "SystemADMIN";
+    /**
      * 超级管理员
      */
     public static final String SuperADMIN = "SuperAdmin";

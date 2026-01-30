@@ -10,8 +10,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableDiscoveryClient
 @EnableFeignClients
 public class AdminServiceApplication {
-
-
     public static void main(String[] args) {
         SpringApplication.run(AdminServiceApplication.class, args);
     }

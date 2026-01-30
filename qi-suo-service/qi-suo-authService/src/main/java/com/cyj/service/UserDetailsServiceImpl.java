@@ -85,6 +85,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                     return new SimpleGrantedAuthority(RoleConstants.OrdinaryADMIN);
                 }else if(type == 2){
                     return new SimpleGrantedAuthority(RoleConstants.SuperADMIN);
+                } else if (type == 3) {
+                    return new SimpleGrantedAuthority(RoleConstants.SystemADMIN);
                 }
                 return new SimpleGrantedAuthority(RoleConstants.ROLE_ERROR);
             }).collect(Collectors.toList()));

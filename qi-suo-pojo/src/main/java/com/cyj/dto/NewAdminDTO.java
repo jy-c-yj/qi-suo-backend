@@ -23,11 +23,6 @@ public class NewAdminDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 管理员ID
-     */
-    private Long adminId;
-
-    /**
      * 管理员名
      */
     private String adminName;
@@ -43,7 +38,7 @@ public class NewAdminDTO implements Serializable {
     private String phone;
 
     /**
-     * 管理员类型：1-普通管理员，2-超级管理员
+     * 管理员类型：1-普通管理员，2-超级管理员, 3-系统管理员
      */
     private Integer adminType;
 
