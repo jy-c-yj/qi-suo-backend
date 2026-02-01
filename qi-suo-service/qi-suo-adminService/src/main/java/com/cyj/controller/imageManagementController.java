@@ -1,6 +1,7 @@
 package com.cyj.controller;
 
 
+import com.cyj.common.PageResult;
 import com.cyj.common.Result;
 import com.cyj.dto.CarouselImageDetailsDTO;
 import com.cyj.dvo.CarouselImageDVO;
@@ -24,22 +25,22 @@ public class imageManagementController {
      * 查询主页背景图片列表
      */
     @GetMapping("/getHomeBackGroundImageList")
-    private Result<List<HomeBackgroundImageDVO>> getHomeBackGroundImageList() {
-        return imageManagementService.getHomeBackGroundImageList();
+    private Result<PageResult<HomeBackgroundImageDVO>> getHomeBackGroundImageList(int pageNum, Long pageSize) {
+        return imageManagementService.getHomeBackGroundImageList(pageNum,pageSize);
     }
     /**
      * 设置启用
      */
     @PutMapping("/setHomeBackGroundImageEnabled")
-    public Result<String> setHomeBackGroundImageEnabled(@RequestParam("uid") String imageUid){
-        return imageManagementService.setHomeBackGroundImageEnabled(imageUid);
+    public Result<String> setHomeBackGroundImageEnabled(@RequestParam("uid") String imageUid,@RequestParam int pageNum){
+        return imageManagementService.setHomeBackGroundImageEnabled(imageUid,pageNum);
     }
     /**
      * 设置禁用
      */
     @PutMapping("/setHomeBackGroundImageNotEnabled")
-    public Result<String> setHomeBackGroundImageNotEnabled(@RequestParam("uid") String imageUid){
-        return imageManagementService.setHomeBackGroundImageNotEnabled(imageUid);
+    public Result<String> setHomeBackGroundImageNotEnabled(@RequestParam("uid") String imageUid,@RequestParam int pageNum){
+        return imageManagementService.setHomeBackGroundImageNotEnabled(imageUid, pageNum);
     }
     /**
      * 新增图片
@@ -59,8 +60,8 @@ public class imageManagementController {
      * 编辑主页背景图片信息
      */
     @PutMapping("/updateHomeBackGroundImage")
-    public Result<String> updateHomeBackGroundImage(@RequestBody HomeBackgroundImageDVO homeBackgroundImageDVO){
-        return imageManagementService.updateHomeBackGroundImage(homeBackgroundImageDVO);
+    public Result<String> updateHomeBackGroundImage(@RequestBody HomeBackgroundImageDVO homeBackgroundImageDVO,@RequestParam int pageNum){
+        return imageManagementService.updateHomeBackGroundImage(homeBackgroundImageDVO,pageNum);
     }
     /**
      * 获取当前背景图片

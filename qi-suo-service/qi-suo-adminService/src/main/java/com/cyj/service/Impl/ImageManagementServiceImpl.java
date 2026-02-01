@@ -2,6 +2,8 @@ package com.cyj.service.Impl;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.cyj.common.PageResult;
 import com.cyj.common.Result;
 import com.cyj.constant.RedissonKey;
 import com.cyj.dto.CarouselImageDetailsDTO;
@@ -336,23 +338,32 @@ public class ImageManagementServiceImpl implements ImageManagementService {
      * 主页背景图像管理
      */
     @Override
-    public Result<List<HomeBackgroundImageDVO>> getHomeBackGroundImageList() {
+    public Result<PageResult<HomeBackgroundImageDVO>> getHomeBackGroundImageList(int pageNum,Long pageSize) {
         //查询缓存
-        List<HomeBackgroundImageDVO> homeBackGroundImageDVOList = redissonUtil.getList(RedissonKey.IMAGE_HOMEBACKGROUND_KEY);
+        String key = RedissonKey.IMAGE_HOMEBACKGROUND_KEY+"page:"+pageNum;
+        List<HomeBackgroundImageDVO> homeBackGroundImageDVOList = redissonUtil.getList(key);
 
         //存在直接返回
         if(!homeBackGroundImageDVOList.isEmpty()){
-            return Result.success(homeBackGroundImageDVOList);
+            PageResult<HomeBackgroundImageDVO> pageResult = new PageResult<>();
+            pageResult.setRows(homeBackGroundImageDVOList);
+            pageResult.setTotal((long) homeBackGroundImageDVOList.size());
+            return Result.success(pageResult);
         }
 
         //不存在查询数据库
+        Page<HomeBackgroundImage> page = new Page<>(pageNum, pageSize);
         QueryWrapper<HomeBackgroundImage> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("is_deleted",false);
-        List<HomeBackgroundImage> homeBackgroundImageList = homeBackgroundImageMapper.selectList(queryWrapper);
+        queryWrapper.orderByDesc("id");
+     //   List<HomeBackgroundImage> homeBackgroundImageList = homeBackgroundImageMapper.selectList(queryWrapper);
+        Page<HomeBackgroundImage> homeBackgroundImagePage = homeBackgroundImageMapper.selectPage(page, queryWrapper);
+        List<HomeBackgroundImage> homeBackgroundImageList = homeBackgroundImagePage.getRecords();
+        Long total = homeBackgroundImagePage.getTotal();
 
         //查询成功存入缓存
         homeBackgroundImageList.forEach(image -> {
-            redissonUtil.addToList(RedissonKey.IMAGE_HOMEBACKGROUND_KEY, HomeBackgroundImageDVO.builder()
+            redissonUtil.addToList(key, HomeBackgroundImageDVO.builder()
                     .id(image.getId())
                     .url(image.getUrl())
                     .uid(image.getUid())
@@ -364,7 +375,12 @@ public class ImageManagementServiceImpl implements ImageManagementService {
                     .build());
         });
 
-        return Result.success(homeBackGroundImageDVOList);
+        //构建返回值
+        PageResult<HomeBackgroundImageDVO> pageResult = new PageResult<>();
+        pageResult.setRows(homeBackGroundImageDVOList);
+        pageResult.setTotal(total);
+
+        return Result.success(pageResult);
     }
 
     /**
@@ -373,8 +389,8 @@ public class ImageManagementServiceImpl implements ImageManagementService {
      * @return
      */
     @Override
-    public Result<String> setHomeBackGroundImageEnabled(String imageUid) {
-        return HomeBackGroundImageIsOrNotEnabled(imageUid, true);
+    public Result<String> setHomeBackGroundImageEnabled(String imageUid,int pageNum) {
+        return HomeBackGroundImageIsOrNotEnabled(imageUid, true,pageNum);
     }
 
     /**
@@ -383,8 +399,8 @@ public class ImageManagementServiceImpl implements ImageManagementService {
      * @return
      */
     @Override
-    public Result<String> setHomeBackGroundImageNotEnabled(String imageUid) {
-        return HomeBackGroundImageIsOrNotEnabled(imageUid, false);
+    public Result<String> setHomeBackGroundImageNotEnabled(String imageUid,int pageNum) {
+        return HomeBackGroundImageIsOrNotEnabled(imageUid, false,pageNum);
     }
 
     /**
@@ -392,37 +408,27 @@ public class ImageManagementServiceImpl implements ImageManagementService {
      * @param imageUid
      * @return
      */
-    private Result<String> HomeBackGroundImageIsOrNotEnabled(String imageUid,boolean isEnabled) {
+    private Result<String> HomeBackGroundImageIsOrNotEnabled(String imageUid,boolean isEnabled,int pageNum) {
         QueryWrapper<HomeBackgroundImage> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("uid", imageUid);
         HomeBackgroundImage homeBackgroundImage = new HomeBackgroundImage();
         homeBackgroundImage.setIsEnabled(isEnabled);
+        homeBackgroundImage.setUpdatedTime(LocalDateTime.now());
         homeBackgroundImageMapper.update(homeBackgroundImage, queryWrapper);
 
-        //删除缓存
-        if(!redissonUtil.getList(RedissonKey.IMAGE_HOMEBACKGROUND_KEY).isEmpty()){
-            redissonUtil.delete(RedissonKey.IMAGE_HOMEBACKGROUND_KEY);
+        String key = RedissonKey.IMAGE_HOMEBACKGROUND_KEY+"page:"+pageNum;
+        //获取缓存
+        List<HomeBackgroundImageDVO> homeBackgroundImageDVOList = redissonUtil.getList(key);
+
+        for (int i = 0; i < homeBackgroundImageDVOList.size(); i++) {
+                HomeBackgroundImageDVO homeBackgroundImageDVO = homeBackgroundImageDVOList.get(i);
+                if(homeBackgroundImageDVO.getUid().equals(imageUid)){
+                    homeBackgroundImageDVO.setIsEnabled(isEnabled);
+                    homeBackgroundImageDVO.setUpdatedTime(homeBackgroundImage.getUpdatedTime());
+                    homeBackgroundImageDVOList.set(i, homeBackgroundImageDVO);
+                }
         }
-
-        //查询背景图列表
-        QueryWrapper<HomeBackgroundImage> queryWrapper_ = new QueryWrapper<>();
-        queryWrapper_.eq("is_deleted",false);
-        List<HomeBackgroundImage> homeBackgroundImageList = homeBackgroundImageMapper.selectList(queryWrapper_);
-
-        //更新缓存
-        homeBackgroundImageList.forEach(image -> {
-            redissonUtil.addToList(RedissonKey.IMAGE_HOMEBACKGROUND_KEY, HomeBackgroundImageDVO.builder()
-                    .id(image.getId())
-                    .url(image.getUrl())
-                    .uid(image.getUid())
-                    .isEnabled(image.getIsEnabled())
-                    .isDeleted(image.getIsDeleted())
-                    .createdTime(image.getCreatedTime())
-                    .updatedTime(image.getUpdatedTime())
-                    .description(image.getDescription())
-                    .build());
-        });
-        return Result.success("启用成功");
+        return Result.success("设置成功");
     }
 
     /**
@@ -457,22 +463,7 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         List<HomeBackgroundImage> homeBackgroundImageList = homeBackgroundImageMapper.selectList(queryWrapper);
 
         //删除缓存
-        redissonUtil.delete(RedissonKey.IMAGE_HOMEBACKGROUND_KEY);
-
-        //更新缓存
-        homeBackgroundImageList.forEach(image -> {
-            redissonUtil.addToList(RedissonKey.IMAGE_HOMEBACKGROUND_KEY, HomeBackgroundImageDVO.builder()
-                    .id(image.getId())
-                    .url(image.getUrl())
-                    .uid(image.getUid())
-                    .isEnabled(image.getIsEnabled())
-                    .isDeleted(image.getIsDeleted())
-                    .description(image.getDescription())
-                    .updatedTime(image.getUpdatedTime())
-                    .createdTime(image.getCreatedTime())
-                    .build()
-            );
-        });
+        redissonUtil.deleteByPattern(RedissonKey.IMAGE_HOMEBACKGROUND_KEY+"page:*");
 
         return Result.success("新增成功");
     }
@@ -491,13 +482,8 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         homeBackgroundImage.setUid(imageUid);
         homeBackgroundImageMapper.update(homeBackgroundImage, queryWrapper);
 
-        //从redis获取列表并删除
-        List<HomeBackgroundImageDVO> list = redissonUtil.getList(RedissonKey.IMAGE_HOMEBACKGROUND_KEY);
-        list.forEach(image -> {
-            if(image.getUid().equals(imageUid)){
-                list.remove(image);
-            }
-        });
+        //删除缓存
+        redissonUtil.deleteByPattern(RedissonKey.IMAGE_HOMEBACKGROUND_KEY+"page:*");
 
         return Result.success("删除成功");
     }
@@ -508,7 +494,7 @@ public class ImageManagementServiceImpl implements ImageManagementService {
      * @return
      */
     @Override
-    public Result<String> updateHomeBackGroundImage(HomeBackgroundImageDVO homeBackgroundImageDVO) {
+    public Result<String> updateHomeBackGroundImage(HomeBackgroundImageDVO homeBackgroundImageDVO,int pageNum) {
         HomeBackgroundImage homeBackgroundImage = new HomeBackgroundImage();
         homeBackgroundImage.setId(homeBackgroundImageDVO.getId());
         homeBackgroundImage.setDescription(homeBackgroundImageDVO.getDescription());
@@ -519,13 +505,15 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         homeBackgroundImageMapper.updateById(homeBackgroundImage);
 
 
-        List<HomeBackgroundImageDVO> list = redissonUtil.getList(RedissonKey.IMAGE_HOMEBACKGROUND_KEY);
-        list.forEach(image -> {
-            if(image.getUid().equals(homeBackgroundImageDVO.getUid())){
-                list.remove(image);
-                list.add(homeBackgroundImageDVO);
+        //更新缓存
+        List<HomeBackgroundImageDVO> list = redissonUtil.getList(RedissonKey.IMAGE_HOMEBACKGROUND_KEY+"page:"+pageNum);
+
+        for (int i = 0; i < list.size(); i++) {
+            HomeBackgroundImageDVO homeBackgroundImageDVO1 = list.get(i);
+            if(homeBackgroundImageDVO1.getUid().equals(homeBackgroundImageDVO.getUid())){
+                list.set(i, homeBackgroundImageDVO);
             }
-        });
+        }
 
         return Result.success("编辑成功");
     }
@@ -576,16 +564,13 @@ public class ImageManagementServiceImpl implements ImageManagementService {
             return Result.success("当前已存在正在使用的背景图片");
         }
         //查询背景图片
-        List<HomeBackgroundImageDVO> list = redissonUtil.getList(RedissonKey.IMAGE_HOMEBACKGROUND_KEY);
+        QueryWrapper<HomeBackgroundImage> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("is_deleted",false);
+        queryWrapper.eq("uid",uid);
 
-        HomeBackgroundImageDVO homeBackgroundImage = null;
+        HomeBackgroundImage homeBackgroundImage = homeBackgroundImageMapper.selectOne(queryWrapper);
 
-        for(HomeBackgroundImageDVO image : list){
-            if(image.getUid().equals(uid)){
-                homeBackgroundImage = image;
-                break;
-            }
-        }
+
         //判断是否存在
         if(homeBackgroundImage == null){
             return Result.success("该图片不存在");
@@ -596,7 +581,17 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         }
 
         //设置背景图片
-        redissonUtil.setValue(RedissonKey.IMAGE_HOMEBACKGROUND_NOW_KEY, homeBackgroundImage);
+        redissonUtil.setValue(RedissonKey.IMAGE_HOMEBACKGROUND_NOW_KEY, HomeBackgroundImageDVO.builder()
+                        .description(homeBackgroundImage.getDescription())
+                        .isDeleted(homeBackgroundImage.getIsDeleted())
+                        .isEnabled(homeBackgroundImage.getIsEnabled())
+                        .uid(homeBackgroundImage.getUid())
+                        .id(homeBackgroundImage.getId())
+                        .url(homeBackgroundImage.getUrl())
+                        .createdTime(homeBackgroundImage.getCreatedTime())
+                        .updatedTime(homeBackgroundImage.getUpdatedTime())
+                .build()
+        );
         return Result.success("设置成功");
     }
 }

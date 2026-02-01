@@ -1,5 +1,6 @@
 package com.cyj.service;
 
+import com.cyj.common.PageResult;
 import com.cyj.common.Result;
 import com.cyj.dto.CarouselImageDetailsDTO;
 import com.cyj.dvo.CarouselImageDVO;
@@ -60,7 +61,7 @@ public interface ImageManagementService {
     /**
      * 主页背景图像管理
      */
-    Result<List<HomeBackgroundImageDVO>> getHomeBackGroundImageList();
+    Result<PageResult<HomeBackgroundImageDVO>> getHomeBackGroundImageList(int pageNum, Long pageSize);
 
     /**
      * 设置启用
@@ -68,7 +69,7 @@ public interface ImageManagementService {
      * @param imageUid
      * @return
      */
-    Result<String> setHomeBackGroundImageEnabled(String imageUid);
+    Result<String> setHomeBackGroundImageEnabled(String imageUid,int pageNum);
 
     /**
      * 设置禁用
@@ -76,7 +77,7 @@ public interface ImageManagementService {
      * @param imageUid
      * @return
      */
-    Result<String> setHomeBackGroundImageNotEnabled(String imageUid);
+    Result<String> setHomeBackGroundImageNotEnabled(String imageUid,int pageNum);
 
     /**
      * 新增
@@ -99,7 +100,7 @@ public interface ImageManagementService {
      * @param homeBackgroundImageDVO
      * @return
      */
-    Result<String> updateHomeBackGroundImage(HomeBackgroundImageDVO homeBackgroundImageDVO);
+    Result<String> updateHomeBackGroundImage(HomeBackgroundImageDVO homeBackgroundImageDVO,int pageNum);
 
     /**
      * 获取当前背景图片
