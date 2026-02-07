@@ -7,12 +7,10 @@ import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 /**
  * <p>
@@ -24,6 +22,8 @@ import lombok.Setter;
  */
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @TableName("category")
 public class Category implements Serializable {
 
@@ -78,9 +78,27 @@ public class Category implements Serializable {
     @TableField("path")
     private String path;
 
+    /**
+     * 是否删除：0-未删除，1-已删除
+     */
+    @TableField("is_deleted")
+    private Boolean isDeleted;
+
+
     @TableField("created_at")
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
     @TableField("updated_at")
-    private Date updatedAt;
+    private LocalDateTime updatedAt;
+
+    public static  String setCategoryType(int i) {
+        //分类类型：1-空间分类，2-风格分类，3-材质分类，4-功能分类
+        return switch (i) {
+            case 1 -> "空间分类";
+            case 2 -> "风格分类";
+            case 3 -> "材质分类";
+            case 4 -> "功能分类";
+            default -> "不存在的分类";
+        };
+    }
 }

@@ -20,11 +20,14 @@ public class CorsConfig {
 
         // 允许的请求头
         corsConfiguration.addAllowedHeader("*");
+        // 设置允许的源
+        corsConfiguration.addAllowedOrigin("http://localhost:5173");
+        corsConfiguration.addAllowedOrigin("http://127.0.0.1:5173");
 
         // 允许的请求源（注意：使用 addAllowedOrigin 或 addAllowedOriginPattern）
         // 如果使用通配符 *，需要同时设置 setAllowCredentials(false)
         // 如果需要携带凭证（cookies等），不能使用通配符 *
-        corsConfiguration.addAllowedOriginPattern("*");
+       // corsConfiguration.addAllowedOriginPattern("*");
 
         // 允许的请求方法
         corsConfiguration.setAllowedMethods(Arrays.asList(

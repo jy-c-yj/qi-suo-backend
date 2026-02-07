@@ -1,8 +1,12 @@
 package com.cyj.mapper;
 
+import com.cyj.dvo.GetCategoryDVO;
 import com.cyj.entity.Category;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.github.pagehelper.Page;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,5 +18,6 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface CategoryMapper extends BaseMapper<Category> {
+    Page<GetCategoryDVO> getCategoryByCondition(Category category);
 
 }

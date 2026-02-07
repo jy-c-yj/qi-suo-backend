@@ -37,9 +37,9 @@ public class JwtFilter implements WebFilter {
         String url = exchange.getRequest().getURI().getPath();
 
         if(token == null || WhitelistURL.Refresh_Token_Url.equals(url)
-            || url.contains("test")
+            || url.contains("test") || url.contains("kaptcha") || url.contains("/user/home/getBackGroundImage")
         ) {
-            //登陆操作，放行
+            //放行
             return chain.filter(exchange);
         }
 

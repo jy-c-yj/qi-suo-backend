@@ -1,6 +1,6 @@
 package com.cyj.common;
 
-public class WhitelistURL {
+public class WhitelistURL {    /**
     /**
      * 令牌刷新url
      */
@@ -13,4 +13,9 @@ public class WhitelistURL {
      * 注册接口
      */
     public static final String User_Register_Url = "/api/user/register";
+
+    /**
+     * 登陆界面背景图片显示
+     */
+    public static final String home_getBackGroundImage_Url = "/api/user/home/getBackGroundImage";
 }

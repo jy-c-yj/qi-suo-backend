@@ -85,7 +85,9 @@ public class securityConfig {
                                 "/api/admin/image/getNowHomeBackGroundImage",
                                 WhitelistURL.Refresh_Token_Url,
                                 WhitelistURL.File_Upload_Url,
-                                WhitelistURL.User_Register_Url).permitAll() // 放行api
+                                WhitelistURL.User_Register_Url,
+                                WhitelistURL.home_getBackGroundImage_Url
+                                ).permitAll() // 放行api
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
                         .anyRequest().authenticated()
                 );
