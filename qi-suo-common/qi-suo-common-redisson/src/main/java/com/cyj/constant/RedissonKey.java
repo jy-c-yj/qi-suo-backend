@@ -6,4 +6,5 @@ public class RedissonKey {
     public static final String IMAGE_HOMEBACKGROUND_NOW_KEY = "image:homeBackGround:now:";
     public static final String ADMIN_KEY = "admin:";
     public static final String CATEGORY_PAGE_KEY = "category:page:";
+    public static final String PRODUCT_MANAGEMENT_DETAIL_KEY = "product:management:detail:";
 }

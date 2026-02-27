@@ -1,6 +1,7 @@
 package com.cyj.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serial;
@@ -15,6 +16,7 @@ import java.util.Date;
  * @since 2024-12-25
  */
 @Data
+@Builder
 @TableName("merchant")
 public class Merchant implements Serializable {
     @Serial

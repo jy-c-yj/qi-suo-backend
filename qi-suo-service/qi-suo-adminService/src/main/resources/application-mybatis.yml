@@ -29,8 +29,7 @@ mybatis-plus:
     local-cache-scope: session
     call-setters-on-nulls: true
     auto-mapping-behavior: full
-
 logging:
   level:
-    com.cyj.xx.mapper: trace
+    com.cyj.mapper: debug
     java.sql: debug

@@ -2,21 +2,21 @@ package com.cyj.service;
 
 import com.cyj.common.PageResult;
 import com.cyj.common.Result;
-import com.cyj.dto.GetCategoryByConditionDTO;
+import com.cyj.dto.AdminGetCategoryByConditionDTO;
 import com.cyj.dto.NewCategoryDTO;
-import com.cyj.dvo.GetCategoryDVO;
+import com.cyj.dvo.AdminGetCategoryDVO;
 
 public interface CategoryManagementService {
     /**
      * 分页查询所有分类
      */
-    Result<PageResult<GetCategoryDVO>> getCategory(int pageNum, int pageSize);
+    Result<PageResult<AdminGetCategoryDVO>> getCategory(int pageNum, int pageSize);
 
 
     /**
      * 条件查询
      */
-    Result<PageResult<GetCategoryDVO>> getCategoryByCondition(GetCategoryByConditionDTO getCategoryByConditionDTO);
+    Result<PageResult<AdminGetCategoryDVO>> getCategoryByCondition(AdminGetCategoryByConditionDTO adminGetCategoryByConditionDTO);
 
     /**
      * 设置状态

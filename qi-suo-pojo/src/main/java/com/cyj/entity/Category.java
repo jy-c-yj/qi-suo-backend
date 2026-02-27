@@ -52,7 +52,7 @@ public class Category implements Serializable {
      * 分类类型：1-空间分类，2-风格分类，3-材质分类，4-功能分类
      */
     @TableField("category_type")
-    private Byte categoryType;
+    private Integer categoryType;
 
     /**
      * 排序值，越小越靠前
@@ -70,7 +70,7 @@ public class Category implements Serializable {
      * 分类层级
      */
     @TableField("level")
-    private Byte level;
+    private Integer level;
 
     /**
      * 分类路径，如：/1/2/3
@@ -91,7 +91,7 @@ public class Category implements Serializable {
     @TableField("updated_at")
     private LocalDateTime updatedAt;
 
-    public static  String setCategoryType(int i) {
+    public static  String setCategoryTypeToString(int i) {
         //分类类型：1-空间分类，2-风格分类，3-材质分类，4-功能分类
         return switch (i) {
             case 1 -> "空间分类";

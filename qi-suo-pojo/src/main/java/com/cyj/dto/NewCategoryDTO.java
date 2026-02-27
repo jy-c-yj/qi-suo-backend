@@ -23,9 +23,9 @@ public class NewCategoryDTO {
     /**
      * 分类类型：1-空间分类，2-风格分类，3-材质分类，4-功能分类
      */
-    private Byte categoryType;
+    private Integer categoryType;
     /**
      * 分类层级
      */
-    private Byte level;
+    private Integer level;
 }

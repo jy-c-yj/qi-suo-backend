@@ -7,6 +7,8 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Properties;
+
 @Configuration
 public class MybatisPlusConfig {
 
@@ -19,4 +21,5 @@ public class MybatisPlusConfig {
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL)); // 如果配置多个插件, 切记分页最后添加
         return interceptor;
     }
+
 }

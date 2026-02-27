@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cyj.mapper.CategoryMapper">
+    <select id="getCategoryByCondition" resultType="com.cyj.dvo.AdminGetCategoryDVO">
+        SELECT
+        c.id,
+        p.name AS parent_name, -- 父分类名称
+        c.name,
+        CASE c.category_type
+        WHEN 1 THEN '空间分类'
+        WHEN 2 THEN '风格分类'
+        WHEN 3 THEN '材质分类'
+        WHEN 4 THEN '功能分类'
+        ELSE '其他'
+        END AS category_type, -- 转换为中文类型名称
+        CASE c.is_active
+        WHEN 1 THEN true
+        ELSE false
+        END AS is_active, -- 转换为Boolean类型
+        c.level,
+        c.path,
+        c.created_at,
+        c.updated_at
+        FROM category c
+        LEFT JOIN category p ON c.parent_id = p.id AND p.is_deleted = 0
+        WHERE c.is_deleted = 0
+        <if test="category.name != null and category.name != ''">
+            AND c.name LIKE CONCAT('%', #{category.name}, '%')
+        </if>
+        <if test="category.categoryType != null and category.categoryType != ''">
+            AND c.category_type = #{category.categoryType}
+        </if>
+        <if test="category.isActive != null and category.isActive != ''">
+            AND c.is_active = #{category.isActive}
+        </if>
+        <if test="category.level != null and category.level != ''">
+            AND c.level = #{category.level}
+        </if>
+        ORDER BY c.sort_order , c.created_at DESC
+    </select>
+</mapper>

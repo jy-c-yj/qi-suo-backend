@@ -5,17 +5,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyj.common.PageResult;
 import com.cyj.common.Result;
 import com.cyj.constant.RedissonKey;
-import com.cyj.dto.GetCategoryByConditionDTO;
+import com.cyj.dto.AdminGetCategoryByConditionDTO;
 import com.cyj.dto.NewCategoryDTO;
-import com.cyj.dvo.GetCategoryDVO;
+import com.cyj.dvo.AdminGetCategoryDVO;
 import com.cyj.entity.Category;
+import com.cyj.entity.HomeBackgroundImage;
 import com.cyj.mapper.CategoryMapper;
 import com.cyj.service.CategoryManagementService;
 import com.cyj.utils.RedissonUtil;
-import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.LifecycleState;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,15 +33,15 @@ public class CategoryManagementServiceImpl implements CategoryManagementService 
      * 分页查询所有分类
      */
     @Override
-    public Result<PageResult<GetCategoryDVO>> getCategory(int pageNum, int pageSize) {
+    public Result<PageResult<AdminGetCategoryDVO>> getCategory(int pageNum, int pageSize) {
         String key = RedissonKey.CATEGORY_PAGE_KEY+pageNum;
         //查询缓存
-        List<GetCategoryDVO> getCategoryDVOList = redissonUtil.getList(key);
+        List<AdminGetCategoryDVO> adminGetCategoryDVOList = redissonUtil.getList(key);
         //存在返回
-        if(getCategoryDVOList!=null|| !getCategoryDVOList.isEmpty()){
-            PageResult<GetCategoryDVO> pageResult = new PageResult<>();
-            pageResult.setTotal(Integer.toUnsignedLong(getCategoryDVOList.size()) );
-            pageResult.setRows(getCategoryDVOList);
+        if(adminGetCategoryDVOList !=null && !adminGetCategoryDVOList.isEmpty()){
+            PageResult<AdminGetCategoryDVO> pageResult = new PageResult<>();
+            pageResult.setTotal(Integer.toUnsignedLong(adminGetCategoryDVOList.size()) );
+            pageResult.setRows(adminGetCategoryDVOList);
             return Result.success(pageResult);
         }
         //不存在查询数据库
@@ -57,26 +55,26 @@ public class CategoryManagementServiceImpl implements CategoryManagementService 
             return Result.error("数据库查询出错，数据不存在");
         }
         //增加缓存
-        for(Category category:list){
-            GetCategoryDVO getCategoryDVO = new GetCategoryDVO();
-            getCategoryDVO.setId(category.getId());
-            getCategoryDVO.setName(category.getName());
-            getCategoryDVO.setCategoryType(Category.setCategoryType(category.getCategoryType()));
-            getCategoryDVO.setIsActive(category.getIsActive());
-            getCategoryDVO.setLevel(category.getLevel());
-            getCategoryDVO.setPath(category.getPath());
-            getCategoryDVO.setCreatedAt(category.getCreatedAt());
-            getCategoryDVO.setUpdatedAt(category.getUpdatedAt());
+         for(Category category:list){
+            AdminGetCategoryDVO adminGetCategoryDVO = new AdminGetCategoryDVO();
+            adminGetCategoryDVO.setId(category.getId());
+            adminGetCategoryDVO.setName(category.getName());
+            adminGetCategoryDVO.setCategoryType(Category.setCategoryTypeToString(category.getCategoryType()));
+            adminGetCategoryDVO.setIsActive(category.getIsActive());
+            adminGetCategoryDVO.setLevel(category.getLevel());
+            adminGetCategoryDVO.setPath(category.getPath());
+            adminGetCategoryDVO.setCreatedAt(category.getCreatedAt());
+            adminGetCategoryDVO.setUpdatedAt(category.getUpdatedAt());
             Category category1 = categoryMapper.selectById(category.getParentId());
             if(category1!=null){
-                getCategoryDVO.setParentName(category1.getName());
+                adminGetCategoryDVO.setParentName(category1.getName());
             }
-            getCategoryDVOList.add(getCategoryDVO);
+            adminGetCategoryDVOList.add(adminGetCategoryDVO);
         }
         //返回
-        PageResult<GetCategoryDVO> pageResult = new PageResult<>();
-        pageResult.setTotal(Integer.toUnsignedLong(getCategoryDVOList.size()) );
-        pageResult.setRows(getCategoryDVOList);
+        PageResult<AdminGetCategoryDVO> pageResult = new PageResult<>();
+        pageResult.setTotal(Integer.toUnsignedLong(adminGetCategoryDVOList.size()) );
+        pageResult.setRows(adminGetCategoryDVOList);
         return Result.success(pageResult);
     }
 
@@ -84,24 +82,25 @@ public class CategoryManagementServiceImpl implements CategoryManagementService 
      * 条件查询
      */
     @Override
-    public Result<PageResult<GetCategoryDVO>> getCategoryByCondition(GetCategoryByConditionDTO getCategoryByConditionDTO) {
-        if(getCategoryByConditionDTO==null){
+    public Result<PageResult<AdminGetCategoryDVO>> getCategoryByCondition(AdminGetCategoryByConditionDTO adminGetCategoryByConditionDTO) {
+        if(adminGetCategoryByConditionDTO ==null){
             return Result.error("数据错误--》getCategoryByCondition");
         }
-        if(getCategoryByConditionDTO.getPageNum() < 1 || getCategoryByConditionDTO.getPageSize() < 1){
+        if(adminGetCategoryByConditionDTO.getPageNum() < 1 || adminGetCategoryByConditionDTO.getPageSize() < 1){
             return Result.error("页码异常");
         }
-        PageHelper.startPage(getCategoryByConditionDTO.getPageNum(), getCategoryByConditionDTO.getPageSize());
-        com.github.pagehelper.Page<GetCategoryDVO> page = categoryMapper.getCategoryByCondition(Category.builder()
-                        .categoryType(getCategoryByConditionDTO.getCategoryType())
-                        .name(getCategoryByConditionDTO.getName())
-                        .level(getCategoryByConditionDTO.getLevel())
-                        .isActive(getCategoryByConditionDTO.getIsActive())
-                .build());
-        List<GetCategoryDVO> list = page.getResult();
-        PageResult<GetCategoryDVO> pageResult = new PageResult<>();
-        pageResult.setTotal(page.getTotal());
-        pageResult.setRows(list);
+        Page<HomeBackgroundImage> page = new Page<>( adminGetCategoryByConditionDTO.getPageNum()
+                , adminGetCategoryByConditionDTO.getPageSize());
+        Page<AdminGetCategoryDVO> pageList = categoryMapper.getCategoryByCondition(page, Category.builder()
+                        .categoryType(adminGetCategoryByConditionDTO.getCategoryType())
+                        .name(adminGetCategoryByConditionDTO.getName())
+                        .level(adminGetCategoryByConditionDTO.getLevel())
+                        .isActive(adminGetCategoryByConditionDTO.getIsActive())
+                        .build());
+
+        PageResult<AdminGetCategoryDVO> pageResult = new PageResult<>();
+        pageResult.setTotal(pageList.getTotal());
+        pageResult.setRows(pageList.getRecords());
         return Result.success(pageResult) ;
     }
 
@@ -129,15 +128,20 @@ public class CategoryManagementServiceImpl implements CategoryManagementService 
             active = true;
         }
         //更新缓存
-        List<GetCategoryDVO> list = redissonUtil.getList(RedissonKey.CATEGORY_PAGE_KEY+pageNum);
-        for(int i = 0; i < list.size(); i++){
-            GetCategoryDVO getCategoryDVO = list.get(i);
-            if(getCategoryDVO.getId().equals(id)){
-                getCategoryDVO.setIsActive(active);
-                list.set(i,getCategoryDVO);
-                break;
-            }
-        }
+//        List<GetCategoryDVO> list = redissonUtil.getList(RedissonKey.CATEGORY_PAGE_KEY+pageNum);
+//        for(int i = 0; i < list.size(); i++){
+//            GetCategoryDVO getCategoryDVO = list.get(i);
+//            if(getCategoryDVO.getId() == Integer.parseInt(id.toString())){
+//                getCategoryDVO.setIsActive(active);
+//                list.set(i,getCategoryDVO);
+//                break;
+//            }
+//        }
+
+        //更新数据库
+        categoryMapper.updateById(category);
+        //删除redis分页缓存
+        redissonUtil.deleteByPattern(RedissonKey.CATEGORY_PAGE_KEY+"*");
         return Result.success("设置成功");
     }
 

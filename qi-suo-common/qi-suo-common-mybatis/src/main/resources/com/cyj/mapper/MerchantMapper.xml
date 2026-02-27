@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cyj.mapper.MerchantMapper">
+    <update id="updateMerchantInformation" parameterType="com.cyj.dto.UpdateMerchantInformationFormDTO">
+        UPDATE merchant
+        <set>
+            <!-- 商家名：非空且非空字符串时才更新 -->
+            <if test="merchantName != null and merchantName != ''">
+                merchant_name = #{merchantName},
+            </if>
+            <!-- 密码：非空且非空字符串时才更新（密码单独处理，避免误更新为空） -->
+            <if test="merchantPassword != null and merchantPassword != ''">
+                merchant_password = #{merchantPassword},
+            </if>
+            <!-- 店铺名称：非空且非空字符串 -->
+            <if test="shopName != null and shopName != ''">
+                shop_name = #{shopName},
+            </if>
+            <!-- Logo：允许设置为空，因此只判断非null -->
+            <if test="shopLogoUrl != null">
+                shop_logo_url = #{shopLogoUrl},
+            </if>
+            <!-- 店铺描述：允许为空 -->
+            <if test="description != null">
+                description = #{description},
+            </if>
+            <!-- 联系人姓名 -->
+            <if test="contactName != null">
+                contact_name = #{contactName},
+            </if>
+            <!-- 联系电话 -->
+            <if test="contactPhone != null">
+                contact_phone = #{contactPhone},
+            </if>
+            <!-- 联系邮箱 -->
+            <if test="contactEmail != null">
+                contact_email = #{contactEmail},
+            </if>
+            <!-- 更新人：若传入则更新 -->
+            <if test="updateBy != null">
+                update_by = #{updateBy},
+            </if>
+            <!-- 更新时间：使用数据库当前时间（表定义有ON UPDATE，但显式设置更可靠） -->
+            update_time = NOW()
+        </set>
+        WHERE merchant_id = #{merchantId}
+        AND is_deleted = 0   <!-- 确保只更新未删除的商家 -->
+    </update>
+
+</mapper>
