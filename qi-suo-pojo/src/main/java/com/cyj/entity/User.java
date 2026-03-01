@@ -28,6 +28,8 @@ public class User implements Serializable {
     private String phone;
     @TableField(value = "email")
     private String email;
+    @TableField(value = "status")// 0:正常 1:禁用
+    private Integer status;
     @TableField(value = "create_time")
     private LocalDateTime createTime;
 }

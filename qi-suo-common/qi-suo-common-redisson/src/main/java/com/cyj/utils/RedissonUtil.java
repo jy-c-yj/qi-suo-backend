@@ -249,6 +249,16 @@ public class RedissonUtil {
         RList<T> list = getList(listName);
         return list.add(value);
     }
+    /**
+     * 批量添加元素到List
+     * @param listName 列表名称
+     * @param values 要添加的元素集合
+     * @return 是否添加成功
+     */
+    public <T> boolean addAllToList(String listName, Collection<T> values) {
+        RList<T> list = getList(listName);
+        return list.addAll(values);
+    }
 
     // ==================== 原子操作 ====================
 

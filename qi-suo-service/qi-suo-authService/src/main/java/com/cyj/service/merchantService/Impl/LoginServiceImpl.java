@@ -4,13 +4,10 @@ package com.cyj.service.merchantService.Impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cyj.common.Result;
 import com.cyj.dto.MerchantLoginDTO;
-import com.cyj.dto.UserLoginDTO;
 import com.cyj.dvo.AccessTokenDVO;
 import com.cyj.entity.Merchant;
 import com.cyj.mapper.MerchantMapper;
-import com.cyj.mapper.UserMapper;
 import com.cyj.service.merchantService.MerchantService;
-import com.cyj.service.userService.UserService;
 import com.cyj.utils.JwtUtil;
 import com.cyj.utils.RedissonUtil;
 

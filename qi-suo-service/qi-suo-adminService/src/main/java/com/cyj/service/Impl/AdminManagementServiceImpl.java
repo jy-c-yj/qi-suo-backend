@@ -20,7 +20,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -46,7 +45,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         // 创建分页对象
         Page<Admin> page = new Page<>(pageNum, pageSize);
         //查找缓存
-        String key = RedissonKey.ADMIN_KEY+"page:"+pageNum;
+        String key = RedissonKey.ADMIN_MANAGEMENT_ADMIN_KEY +"page:"+pageNum;
        List<AdminDVO> adminDVOList =  redissonUtil.getList(key);
         //存在直接返回
         if(adminDVOList != null && !adminDVOList.isEmpty()){
@@ -149,8 +148,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         newAdmin.setUpdateBy(cAdmin.getUsername());
         adminMapper.insert(newAdmin);
         //更新\删除缓存
-        redissonUtil.deleteByPattern(RedissonKey.ADMIN_KEY+"page:*");
-//        List<AdminDVO> adminDVOList = redissonUtil.getList(RedissonKey.ADMIN_KEY);
+        redissonUtil.deleteByPattern(RedissonKey.ADMIN_MANAGEMENT_ADMIN_KEY +"page:*");
+//        List<AdminDVO> adminDVOList = redissonUtil.getList(RedissonKey.ADMIN_MANAGEMENT_ADMIN_KEY);
 //
         AdminDVO adminDVO = AdminDVO.builder()
                 .adminId(newAdmin.getAdminId())
@@ -217,7 +216,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         //更新数据库
         adminMapper.updateById(admin);
         //更新缓存
-        List<AdminDVO> adminDVOList = redissonUtil.getList(RedissonKey.ADMIN_KEY+"page:"+pageNum);
+        List<AdminDVO> adminDVOList = redissonUtil.getList(RedissonKey.ADMIN_MANAGEMENT_ADMIN_KEY +"page:"+pageNum);
         for(int i = 0; i < adminDVOList.size(); i++){
             AdminDVO adminDVO = adminDVOList.get(i);
             if(adminDVO.getAdminId().equals(adminId)){
@@ -320,7 +319,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
 
         adminMapper.updateById(newAdmin);
         //更新缓存
-        List<AdminDVO> adminDVOList = redissonUtil.getList(RedissonKey.ADMIN_KEY+"page:"+pageNum);
+        List<AdminDVO> adminDVOList = redissonUtil.getList(RedissonKey.ADMIN_MANAGEMENT_ADMIN_KEY +"page:"+pageNum);
         for (int i = 0; i < adminDVOList.size(); i++) {
             AdminDVO adminDVO = adminDVOList.get(i);
             if (adminDVO.getAdminId().equals(adminDTO.getAdminId())) {
@@ -366,7 +365,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         newadmin.setUpdateTime(LocalDateTime.now());
         adminMapper.updateById(newadmin);
         //更新缓存
-        redissonUtil.deleteByPattern(RedissonKey.ADMIN_KEY+"page:*");
+        redissonUtil.deleteByPattern(RedissonKey.ADMIN_MANAGEMENT_ADMIN_KEY +"page:*");
         return Result.success(true);
     }
 

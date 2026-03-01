@@ -4,13 +4,10 @@ package com.cyj.service.adminService.Impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cyj.common.Result;
 import com.cyj.dto.AdminLoginDTO;
-import com.cyj.dto.UserLoginDTO;
 import com.cyj.dvo.AccessTokenDVO;
 import com.cyj.entity.Admin;
 import com.cyj.mapper.AdminMapper;
-import com.cyj.mapper.UserMapper;
 import com.cyj.service.adminService.AdminService;
-import com.cyj.service.userService.UserService;
 import com.cyj.utils.JwtUtil;
 import com.cyj.utils.RedissonUtil;
 

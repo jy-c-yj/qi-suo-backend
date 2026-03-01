@@ -48,4 +48,41 @@
         AND is_deleted = 0   <!-- 确保只更新未删除的商家 -->
     </update>
 
+    <select id="list" resultType="com.cyj.dvo.AdminMerchantManagementLDVO">
+        SELECT
+        m.merchant_id,
+        m.merchant_name,
+        m.shop_name,
+        m.shop_logo_url,
+        m.description,
+        m.contact_name,
+        m.contact_phone,
+        m.contact_email,
+        m.status,
+        m.create_time,
+        m.update_time,
+        creator.username as creator_name,
+        updater.username as updater_name
+        FROM
+        merchant m
+        LEFT JOIN
+        user creator ON m.create_by = creator.id
+        LEFT JOIN
+        user updater ON m.update_by = updater.id
+        WHERE
+        m.is_deleted = 0
+        <if test="condition.merchantName != null and condition.merchantName != ''">
+            AND m.merchant_name LIKE CONCAT('%', #{condition.merchantName}, '%')
+        </if>
+        <if test="condition.id != null">
+            AND m.id = #{condition.id}
+        </if>
+        <if test="condition.status != null">
+            AND m.status = #{condition.status}
+        </if>
+        ORDER BY
+        m.create_time DESC
+    </select>
+
+
 </mapper>
