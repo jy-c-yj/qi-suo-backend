@@ -9,6 +9,7 @@ import com.cyj.service.MerchantInformationManagement;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 public class MerchantInformationManagementImpl implements MerchantInformationManagement {
     @Autowired
     private MerchantMapper merchantMapper;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     @Override
     public Result<MerchantInformationDVO> getMerchantInformation() {
         //获取商家id
@@ -38,7 +41,7 @@ public class MerchantInformationManagementImpl implements MerchantInformationMan
         MerchantInformationDVO merchantInformationDVO = MerchantInformationDVO.builder()
                 .merchantId(merchantId)
                 .merchantName(merchant.getMerchantName())
-                .merchantPassword(merchant.getMerchantPassword())
+                .merchantPassword(passwordEncoder.encode(merchant.getMerchantPassword()) )
                 .shopName(merchant.getShopName())
                 .shopLogoUrl(merchant.getShopLogoUrl())
                 .description(merchant.getDescription())

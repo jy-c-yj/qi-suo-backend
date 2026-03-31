@@ -39,16 +39,18 @@ public class AdminUserManagementServiceImpl implements AdminUserManagementServic
  */
     @Override
     public Result<PageResult<AdminUserManagementLDVO>> list(AdminUserListSelectConditionDTO adminUserListSelectConditionDTO) {
+
+
         //查询缓存
         String key = RedissonKey.ADMIN_MANAGEMENT_USER_KEY+ adminUserListSelectConditionDTO.getPageNum();
-        List<AdminUserManagementLDVO> list = redissonUtil.getList(key);
+//        List<AdminUserManagementLDVO> list = redissonUtil.getList(key);
         //存在返回
-        if(list!=null && !list.isEmpty()){
-            PageResult<AdminUserManagementLDVO> pageResult = new PageResult<>();
-            pageResult.setRows(list);
-            pageResult.setTotal((long) list.size());
-            return Result.success(pageResult);
-        }
+//        if(list!=null && !list.isEmpty()){
+//            PageResult<AdminUserManagementLDVO> pageResult = new PageResult<>();
+//            pageResult.setRows(list);
+//            pageResult.setTotal((long) list.size());
+//            return Result.success(pageResult);
+//        }
         //不存在查询数据库
         Page<User> adminUserManagementLDVOPage = new Page<>(adminUserListSelectConditionDTO.getPageNum(), adminUserListSelectConditionDTO.getPageSize());
         List<AdminUserManagementLDVO> adminUserManagementLDVOList = userMapper.selectAdminUserList(adminUserManagementLDVOPage , adminUserListSelectConditionDTO);
@@ -57,8 +59,8 @@ public class AdminUserManagementServiceImpl implements AdminUserManagementServic
             pageResult.setTotal(adminUserManagementLDVOPage.getTotal());
             pageResult.setRows(adminUserManagementLDVOList);
             //存入缓存
-            redissonUtil.addToList(key,adminUserManagementLDVOList);
-            redissonUtil.expire(key,30, TimeUnit.MINUTES);
+//            redissonUtil.addAllToList(key,adminUserManagementLDVOList);
+//            redissonUtil.expire(key,30, TimeUnit.MINUTES);
         }
         //返回结果
         return Result.success(pageResult);
@@ -83,16 +85,16 @@ public class AdminUserManagementServiceImpl implements AdminUserManagementServic
         }
         userMapper.updateById(user);
         //更新缓存
-        String key = RedissonKey.ADMIN_MANAGEMENT_USER_KEY+pageNum;
-        List<AdminUserManagementLDVO> list = redissonUtil.getList(key);
-        for (int i = 0; i < list.size(); i++) {
-            AdminUserManagementLDVO adminUserManagementLDVO = list.get(i);
-            if(adminUserManagementLDVO.getId().equals(id)){
-                adminUserManagementLDVO.setStatus(user.getStatus());
-                list.set(i,adminUserManagementLDVO);
-                break;
-            }
-        }
+//        String key = RedissonKey.ADMIN_MANAGEMENT_USER_KEY+pageNum;
+//        List<AdminUserManagementLDVO> list = redissonUtil.getList(key);
+//        for (int i = 0; i < list.size(); i++) {
+//            AdminUserManagementLDVO adminUserManagementLDVO = list.get(i);
+//            if(adminUserManagementLDVO.getId().equals(id)){
+//                adminUserManagementLDVO.setStatus(user.getStatus());
+//                list.set(i,adminUserManagementLDVO);
+//                break;
+//            }
+//        }
         return Result.success("修改成功");
     }
 }

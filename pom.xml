@@ -22,6 +22,7 @@
         <module>qi-suo-pojo</module>
         <module>qi-suo-test</module>
         <module>qi-suo-gateway</module>
+        <module>qi-suo-common/qi-suo-common-rabbitMQ</module>
     </modules>
 
     <properties>
@@ -41,6 +42,7 @@
         <mysql-jdbc>8.0.31</mysql-jdbc>
         <druid>1.2.20</druid>
         <kaptcha>2.3.2</kaptcha>
+        <rabbit>3.2.8</rabbit>
     </properties>
 
     <dependencyManagement>
@@ -145,7 +147,11 @@
 
 
             <!-- MQ -->
-
+            <dependency>
+                <groupId>org.springframework.amqp</groupId>
+                <artifactId>spring-rabbit</artifactId>
+                <version>${rabbit}</version>
+            </dependency>
             <!-- 定时任务 -->
 
             <!-- 日志 -->

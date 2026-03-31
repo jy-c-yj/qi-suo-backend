@@ -65,10 +65,10 @@ public class NewProductDTO implements Serializable {
     /**
      * 设置分类
      */
-    private List<Integer> categoryId;
+    private List<Integer> categoryIds;
 
     /**
      * 设置属性
      */
-    private List<Integer> attributeId;
+    private List<Integer> attributeAndValues;
 }

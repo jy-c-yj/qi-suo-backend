@@ -4,10 +4,15 @@ package com.cyj.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyj.dto.BackgroundGetProductByConditionDTO;
+import com.cyj.dto.QueryProductByConditionDTO;
 import com.cyj.dvo.BackgroundGetProductDVO;
 import com.cyj.dvo.BackgroundGetProductDetailDVO;
+import com.cyj.dvo.HotProductDVO;
+import com.cyj.dvo.QueryProductDVO;
 import com.cyj.entity.Product;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 /**
  * <p>
@@ -35,5 +40,19 @@ public interface ProductMapper extends BaseMapper<Product> {
     BackgroundGetProductDetailDVO selectProductDetailById(Integer productId);
 
 
+    /**
+     * 获取热门商品
+     * @param page
+     * @return
+     */
+    List<HotProductDVO> queryHotProduct(Page<HotProductDVO> page);
 
+    /**
+     * 根据条件查询产品列表
+     *
+     * @param page 分页对象，包含分页信息
+     * @param query 查询条件对象，封装了查询参数
+     * @return 返回符合条件的产品列表，结果已进行分页处理
+     */
+    List<QueryProductDVO> queryProductByCondition(Page<QueryProductDVO> page, QueryProductByConditionDTO query);
 }

@@ -9,15 +9,18 @@ import com.cyj.constant.RedissonKey;
 import com.cyj.dto.*;
 import com.cyj.dvo.BackgroundGetProductDVO;
 import com.cyj.dvo.BackgroundGetProductDetailDVO;
+import com.cyj.entity.Merchant;
 import com.cyj.entity.Product;
 import com.cyj.entity.ProductAttributeValue;
 import com.cyj.entity.ProductCategory;
 import com.cyj.mapper.*;
+import com.cyj.service.MerchantInformationManagement;
 import com.cyj.service.MerchantProductManagementService;
 import com.cyj.utils.RedissonUtil;
 import com.cyj.utils.SkuUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +39,9 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
     @Autowired
     private ProductMapper productMapper;
 
+    @Autowired
+    private MerchantMapper merchantMapper;
+
 
     @Autowired
     private ProductAttributeValueMapper productAttributeValueMapper;
@@ -53,6 +59,9 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
                 || backgroundGetProductByConditionDTO.getPageSize() == null){
             return Result.error("页码为空");
         }
+        Long merchantId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Merchant merchant = merchantMapper.selectById(merchantId);
+        backgroundGetProductByConditionDTO.setMerchantName(merchant.getMerchantName());
         //查询数据库
         Page<BackgroundGetProductDVO> page = new Page<>(backgroundGetProductByConditionDTO.getPageNum(), backgroundGetProductByConditionDTO.getPageSize());
         Page<BackgroundGetProductDVO> list = productMapper.getProductDVOList(page, backgroundGetProductByConditionDTO);
@@ -181,7 +190,7 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
 
         //设置分类
         List<ProductCategory> list1 = new ArrayList<>();
-        for(Integer id: newProductDTO.getCategoryId() ){
+        for(Integer id: newProductDTO.getCategoryIds() ){
             ProductCategory productCategory = new ProductCategory();
             productCategory.setCategoryId(id);
             productCategory.setProductId(product.getId());
@@ -192,10 +201,10 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
 
         //设置属性
         List<ProductAttributeValue> list2 = new ArrayList<>();
-        for(Integer id: newProductDTO.getAttributeId() ){
+        for(Integer id: newProductDTO.getAttributeAndValues() ){
             ProductAttributeValue productAttributeValue = new ProductAttributeValue();
             productAttributeValue.setProductId(product.getId());
-            productAttributeValue.setAttributeValueId(id);
+            productAttributeValue.setAttribute_valueId(id);
             productAttributeValue.setCreatedAt(LocalDateTime.now());
             list2.add(productAttributeValue);
         }
@@ -219,9 +228,21 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
         productCategory.setCategoryId(newProductCategoryDTO.getCategoryId());
         productCategory.setProductId(newProductCategoryDTO.getProductId());
         productCategory.setCreatedAt(LocalDateTime.now());
-        productCategoryMapper.insert(productCategory);
+        try {
+            productCategoryMapper.insert(productCategory);
+            //删除缓存
+            String key = RedissonKey.PRODUCT_MANAGEMENT_DETAIL_KEY + productCategory.getProductId();
+            redissonUtil.delete(key);
+            return Result.success("新增成功");
+        } catch (DuplicateKeyException e) {
+            // 处理主键冲突异常
+            return Result.error("该商品已属于此分类");
+        } catch (Exception e) {
+            // 处理其他异常
+            log.error("新增商品分类失败", e);
+            return Result.error("新增分类失败：" + e.getMessage());
+        }
 
-        return Result.success("新增成功");
     }
 
     /**
@@ -237,7 +258,8 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
         QueryWrapper<ProductCategory> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("product_id", deleteProductCategoryDTO.getProductId()).eq("category_id", deleteProductCategoryDTO.getCategoryId());
         productCategoryMapper.delete(queryWrapper);
-
+        String key = RedissonKey.PRODUCT_MANAGEMENT_DETAIL_KEY + deleteProductCategoryDTO.getProductId();
+        redissonUtil.delete(key);
         return Result.success("删除成功");
     }
 
@@ -253,11 +275,27 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
         }
         ProductAttributeValue productAttributeValue = new ProductAttributeValue();
         productAttributeValue.setProductId(newProductAttributeValueDTO.getProductId());
-        productAttributeValue.setAttributeValueId(newProductAttributeValueDTO.getAttributeValueId());
+        productAttributeValue.setAttribute_valueId(newProductAttributeValueDTO.getAttributeValueId());
         productAttributeValue.setCreatedAt(LocalDateTime.now());
-        productAttributeValueMapper.insert(productAttributeValue);
+        try {
+            productAttributeValueMapper.insert(productAttributeValue);
+            String key = RedissonKey.PRODUCT_MANAGEMENT_DETAIL_KEY + newProductAttributeValueDTO.getProductId();
+            redissonUtil.delete(key);
+            return Result.success("新增成功");
+        } catch (DuplicateKeyException e) {
+            // 处理主键冲突异常
+            log.warn("重复添加商品属性值：productId={}, attributeValueId={}",
+                    newProductAttributeValueDTO.getProductId(),
+                    newProductAttributeValueDTO.getAttributeValueId());
+            return Result.error("该商品已存在此属性值");
+        } catch (Exception e) {
+            // 处理其他异常
+            log.error("新增商品属性值失败：productId={}, attributeValueId={}",
+                    newProductAttributeValueDTO.getProductId(),
+                    newProductAttributeValueDTO.getAttributeValueId(), e);
+            return Result.error("新增属性失败：" + e.getMessage());
+        }
 
-        return Result.success("新增成功");
     }
 
     /**
@@ -273,7 +311,8 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
         QueryWrapper<ProductAttributeValue> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("product_id", deleteProductAttributeValueDTO.getProductId()).eq("attribute_value_id", deleteProductAttributeValueDTO.getAttributeValueId());
         productAttributeValueMapper.delete(queryWrapper);
-
+        String key = RedissonKey.PRODUCT_MANAGEMENT_DETAIL_KEY + deleteProductAttributeValueDTO.getProductId();
+        redissonUtil.delete(key);
         return Result.success("删除商品属性成功");
     }
 

@@ -280,17 +280,17 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         }
 
         //查询数据库是否重名
-        if(adminDTO.getAdminName() != null){
-
-            //查询数据库是否重名
-            QueryWrapper<Admin> adminQueryWrapper = new QueryWrapper<>();
-            adminQueryWrapper.eq("username",adminDTO.getAdminName());
-            Admin admin_ = adminMapper.selectOne(adminQueryWrapper);
-            if(admin_ != null){
-                return Result.error("该用户名重复");
-            }
-            newAdmin.setUsername(adminDTO.getAdminName());
-        }
+//        if(adminDTO.getAdminName() != null){
+//
+//            //查询数据库是否重名
+//            QueryWrapper<Admin> adminQueryWrapper = new QueryWrapper<>();
+//            adminQueryWrapper.eq("username",adminDTO.getAdminName());
+//            Admin admin_ = adminMapper.selectOne(adminQueryWrapper);
+//            if(admin_ != null){
+//                return Result.error("该用户名重复");
+//            }
+//            newAdmin.setUsername(adminDTO.getAdminName());
+//        }
 
         //判断修改者的权限是否足够设置此等级
         if(adminDTO.getAdminType() != null){

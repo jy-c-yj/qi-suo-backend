@@ -3,8 +3,10 @@ package com.cyj.service.userService.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cyj.common.Result;
+import com.cyj.constant.RedissonKey;
 import com.cyj.dto.UserLoginDTO;
 import com.cyj.dvo.AccessTokenDVO;
+import com.cyj.dvo.UserInformationDVO;
 import com.cyj.entity.User;
 import com.cyj.mapper.UserMapper;
 import com.cyj.service.userService.UserService;
@@ -72,6 +74,10 @@ public class LoginServiceImpl implements UserService {
                 .refresh_token_key(key)
                 .build();
 
+        //将用户信息存入缓存
+        UserInformationDVO userInformationDVO = UserInformationDVO.toUserInformationDVO(user);
+        String userKey = RedissonKey.INFORMATION_USER_KEY + user.getId();
+        redissonUtil.setValue(userKey, userInformationDVO,7,TimeUnit.DAYS);
         //返回访问令牌
         return Result.success(accessTokenDVO);
     }

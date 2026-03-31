@@ -16,4 +16,10 @@ public class AdminUserListSelectConditionDTO {
     private Integer status;
     private Integer pageNum;
     private Integer pageSize;
+    public Boolean isCondition(AdminUserListSelectConditionDTO adminUserListSelectConditionDTO) {
+        if (adminUserListSelectConditionDTO == null) {
+            return false;
+        }
+        return adminUserListSelectConditionDTO.getId() != null || adminUserListSelectConditionDTO.getUsername() != null || adminUserListSelectConditionDTO.getEmail() != null || adminUserListSelectConditionDTO.getStatus() != null;
+    }
 }

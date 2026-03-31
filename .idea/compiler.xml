@@ -16,6 +16,7 @@
         <module name="qi-suo-common-security" />
         <module name="qi-suo-test" />
         <module name="qi-suo-common-mybatis" />
+        <module name="qi-suo-common-rabbitMQ" />
         <module name="qi-suo-common-feign" />
         <module name="qi-suo-fileService" />
         <module name="qi-suo-adminService" />
@@ -36,6 +37,7 @@
       <module name="qi-suo-common-feign" options="-parameters" />
       <module name="qi-suo-common-minio" options="-parameters" />
       <module name="qi-suo-common-mybatis" options="-parameters" />
+      <module name="qi-suo-common-rabbitMQ" options="-parameters" />
       <module name="qi-suo-common-redisson" options="-parameters" />
       <module name="qi-suo-common-security" options="-parameters" />
       <module name="qi-suo-fileService" options="-parameters" />

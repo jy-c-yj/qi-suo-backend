@@ -37,8 +37,8 @@ public class ProductAttributeValue implements Serializable {
     /**
      * 属性值ID
      */
-    @TableField("attributeValue_id")
-    private Integer attributeValueId;
+    @TableField("attribute_value_id")
+    private Integer attribute_valueId;
 
     @TableField("created_at")
     private LocalDateTime createdAt;

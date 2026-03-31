@@ -40,13 +40,13 @@ public class AdminMerchantManagementServiceImpl implements AdminMerchantManageme
         //查询缓存
         String key = RedissonKey.ADMIN_MANAGEMENT_MERCHANT_KEY+ adminMerchantListSelectConditionDTO.getPageNum();
         //存在返回
-        List<AdminMerchantManagementLDVO> list = redissonUtil.getList(key);
+//        List<AdminMerchantManagementLDVO> list = redissonUtil.getList(key);
         PageResult<AdminMerchantManagementLDVO> pageResult = new PageResult<>();
-        if (!list.isEmpty()) {
-            pageResult.setTotal((long) list.size());
-            pageResult.setRows(list);
-            return Result.success(pageResult);
-        }
+//        if (!list.isEmpty()) {
+//            pageResult.setTotal((long) list.size());
+//            pageResult.setRows(list);
+//            return Result.success(pageResult);
+//        }
         //不存在查询数据库
         Page<Merchant> page = new Page<>(adminMerchantListSelectConditionDTO.getPageNum(), adminMerchantListSelectConditionDTO.getPageSize());
         List<AdminMerchantManagementLDVO> merchantList = merchantMapper.list(page, adminMerchantListSelectConditionDTO);
@@ -55,9 +55,10 @@ public class AdminMerchantManagementServiceImpl implements AdminMerchantManageme
         }
         pageResult.setTotal(page.getTotal());
         pageResult.setRows(merchantList);
+
         //存入缓存
-        list.addAll(merchantList);
-        redissonUtil.expire(key, 60, TimeUnit.MINUTES);
+//        list.addAll(merchantList);
+//        redissonUtil.expire(key, 60, TimeUnit.MINUTES);
 
         return Result.success(pageResult);
     }
@@ -84,15 +85,15 @@ public class AdminMerchantManagementServiceImpl implements AdminMerchantManageme
         }
         merchantMapper.updateById(merchant);
         //删除缓存
-        List<AdminMerchantManagementLDVO> list = redissonUtil.getList(RedissonKey.ADMIN_MANAGEMENT_MERCHANT_KEY+pageNum);
-        for (int i = 0; i < list.size(); i++) {
-            AdminMerchantManagementLDVO adminMerchantManagementLDVO = list.get(i);
-            if (adminMerchantManagementLDVO.getMerchantId().equals(id)) {
-                adminMerchantManagementLDVO.setStatus(merchant.getStatus());
-                list.set(i, adminMerchantManagementLDVO);
-                break;
-            }
-        }
+//        List<AdminMerchantManagementLDVO> list = redissonUtil.getList(RedissonKey.ADMIN_MANAGEMENT_MERCHANT_KEY+pageNum);
+//        for (int i = 0; i < list.size(); i++) {
+//            AdminMerchantManagementLDVO adminMerchantManagementLDVO = list.get(i);
+//            if (adminMerchantManagementLDVO.getMerchantId().equals(id)) {
+//                adminMerchantManagementLDVO.setStatus(merchant.getStatus());
+//                list.set(i, adminMerchantManagementLDVO);
+//                break;
+//            }
+//        }
         return Result.success("设置成功");
     }
 }

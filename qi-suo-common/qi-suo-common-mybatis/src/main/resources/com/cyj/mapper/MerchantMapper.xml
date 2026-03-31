@@ -71,11 +71,14 @@
         user updater ON m.update_by = updater.id
         WHERE
         m.is_deleted = 0
-        <if test="condition.merchantName != null and condition.merchantName != ''">
+        <if test="condition.merchantName != null and condition.merchantName.trim != ''">
+            AND m.merchant_name LIKE CONCAT('%', #{condition.merchantName}, '%')
+        </if>
+        <if test="condition.merchantName != null and condition.merchantName.trim != ''">
             AND m.merchant_name LIKE CONCAT('%', #{condition.merchantName}, '%')
         </if>
         <if test="condition.id != null">
-            AND m.id = #{condition.id}
+            AND m.merchant_id = #{condition.id}
         </if>
         <if test="condition.status != null">
             AND m.status = #{condition.status}
