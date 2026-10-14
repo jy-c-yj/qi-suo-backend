@@ -192,7 +192,7 @@ public class UserCartServiceImpl implements UserCartService {
         //获取商家id
         Long sellerId = createOrderDTO.getMerchantId();
         //查询缓存获取购物车列表
-        String cartKey = RedissonKey.USER_CART_KEY + userid;
+        String cartKey = RedissonKey.USER_CART_KEY + userid+":"+sellerId;
         List<Cart> cartList = redissonUtil.getList(cartKey);
         if(cartList == null){
             return Result.error("购物车为空");

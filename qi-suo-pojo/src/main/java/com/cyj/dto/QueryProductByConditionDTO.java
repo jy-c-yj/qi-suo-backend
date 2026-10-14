@@ -19,7 +19,7 @@ public class QueryProductByConditionDTO {
     /**
      * 商品分类
      */
-    private Integer categoryIdValue;
+    private Integer categoryId;
     /**
      * 所属商家
      */

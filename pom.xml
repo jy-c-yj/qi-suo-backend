@@ -22,7 +22,6 @@
         <module>qi-suo-pojo</module>
         <module>qi-suo-test</module>
         <module>qi-suo-gateway</module>
-        <module>qi-suo-common/qi-suo-common-rabbitMQ</module>
     </modules>
 
     <properties>

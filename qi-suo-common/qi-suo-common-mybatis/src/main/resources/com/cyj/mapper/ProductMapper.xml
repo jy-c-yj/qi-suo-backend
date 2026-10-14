@@ -160,8 +160,8 @@
             <if test="query.productName != null and query.productName.trim() != ''">
                 AND p.product_name LIKE CONCAT('%', #{query.productName}, '%')
             </if>
-            <if test="query.categoryIdValue != null">
-                AND pc.category_id = ${query.categoryIdValue}
+            <if test="query.categoryId != null">
+                AND pc.category_id = ${query.categoryId}
             </if>
             <if test="query.merchantName != null and query.merchantName.trim() != ''">
                 AND m.merchant_name LIKE CONCAT('%', #{query.merchantName}, '%')

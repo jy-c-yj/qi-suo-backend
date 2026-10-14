@@ -2,6 +2,7 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
       <profile name="Maven default annotation processors profile" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
@@ -14,6 +15,7 @@
         <module name="qi-suo-gateway" />
         <module name="qi-suo-pojo" />
         <module name="qi-suo-common-security" />
+        <module name="qi-suo-common-log" />
         <module name="qi-suo-test" />
         <module name="qi-suo-common-mybatis" />
         <module name="qi-suo-common-rabbitMQ" />
@@ -35,6 +37,7 @@
       <module name="qi-suo-common" options="" />
       <module name="qi-suo-common-core" options="-parameters" />
       <module name="qi-suo-common-feign" options="-parameters" />
+      <module name="qi-suo-common-log" options="-parameters" />
       <module name="qi-suo-common-minio" options="-parameters" />
       <module name="qi-suo-common-mybatis" options="-parameters" />
       <module name="qi-suo-common-rabbitMQ" options="-parameters" />
