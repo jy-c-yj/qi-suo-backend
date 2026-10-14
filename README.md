@@ -54,6 +54,10 @@ Spring Cloud 多模块工程（Spring Boot 3.3.4 / Spring Cloud 2023.0.3 / Sprin
 
 `FileFeign`（原有：管理服务 → 文件服务的上传调用）在图片管理并入文件服务后已无调用方，作为遗留代码保留在 `qi-suo-common-feign` 中。
 
+> **注意**：`FileFeign` 与 `AdminImageFeignClient` 现在都指向服务名 `qi-suo-file`。同一个服务名被多个 `@FeignClient` 引用时，必须给每个客户端指定唯一的 `contextId`，否则启动即报 `BeanDefinitionOverrideException: ... 'qi-suo-file.FeignClientSpecification'`（5 个服务全部起不来）。`FileFeign` 已声明 `contextId = "fileFeign"`；以后新增指向 `qi-suo-file` 的客户端时同样要指定 `contextId`。
+>
+> 另外，`spring.cloud.openfeign.client.config.<key>` 里的 `<key>` 取的是 `contextId`（未指定时等于服务名），因此 `AdminImageFeignClient` 仍沿用 `application-feign.yml` 中 `qi-suo-file:` 下的超时/重试配置。
+
 ## 五、构建与运行
 
 Maven 未加入 PATH，请使用本机缓存的发行版；各服务打出来的是普通 thin jar（无 `Main-Class`，未做 repackage），**不能用 `java -jar` 启动**：

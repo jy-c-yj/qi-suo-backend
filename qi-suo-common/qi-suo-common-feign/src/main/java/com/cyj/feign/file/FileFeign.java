@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 @FeignClient(value = "qi-suo-file",
+        contextId = "fileFeign",
         fallback = FileFeignBack.class,
         configuration = FeignMultipartConfig.class)
 @Primary
