@@ -2,7 +2,7 @@ package com.cyj.service;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.cyj.common.httpType;
+import com.cyj.common.HttpType;
 import com.cyj.constants.RoleConstants;
 import com.cyj.domain.LoginUserDetails;
 import com.cyj.entity.*;
@@ -46,7 +46,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         String url = request.getRequestURI();
 
 
-        if(url.contains(httpType.user)){
+        if(url.contains(HttpType.user)){
             log.info("用户登陆 ---> {}",username);
             //从数据库获取用户信息
             QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -71,7 +71,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             System.out.println("用户登陆");
         }
 
-        if (url.contains(httpType.admin)){
+        if (url.contains(HttpType.admin)){
             log.info("管理员登陆 ---> {}",username);
             //从数据库获取用户信息
             QueryWrapper<Admin> queryWrapper = new QueryWrapper<>();
@@ -95,7 +95,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             System.out.println("管理员登陆");
         }
 
-        if (url.contains(httpType.merchant)){
+        if (url.contains(HttpType.merchant)){
             log.info("商家登陆 ---> {}",username);
             //从数据库获取用户信息
             QueryWrapper<Merchant> queryWrapper = new QueryWrapper<>();

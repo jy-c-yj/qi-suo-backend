@@ -2,7 +2,7 @@ package com.cyj.controller;
 
 
 import com.cyj.common.Result;
-import com.cyj.config.minioConfig;
+import com.cyj.config.MinioConfig;
 import com.cyj.exception.FileUploadException;
 import com.cyj.utils.MinIOUtils;
 import io.minio.ObjectWriteResponse;
@@ -20,7 +20,7 @@ import java.util.UUID;
 public class FileHealthController {
 
     @Autowired
-    private minioConfig  minioUtil;
+    private MinioConfig  minioUtil;
 
 
 

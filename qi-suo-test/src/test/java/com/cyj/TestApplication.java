@@ -21,7 +21,7 @@ public class TestApplication {
     @Autowired
     RedissonClient redissonClient;
     @Autowired
-    asdJwtUtil asdJwtUtil;
+    AsdJwtUtil asdJwtUtil;
     @Test
     public void test() {
         System.out.println(Calendar.getInstance().getTime());
