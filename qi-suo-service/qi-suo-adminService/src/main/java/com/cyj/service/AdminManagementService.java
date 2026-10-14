@@ -47,4 +47,11 @@ public interface AdminManagementService {
      * @return
      */
     Result<Boolean> deleteAdmin(Long adminId);
+
+    /**
+     * 按管理员id取用户名（其他服务需要操作人/审计名时使用）
+     * @param id 管理员id
+     * @return 返回管理员用户名
+     */
+    Result<String> getAdminNameById(Long id);
 }

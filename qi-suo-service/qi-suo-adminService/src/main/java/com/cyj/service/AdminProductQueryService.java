@@ -6,7 +6,10 @@ import com.cyj.dto.BackgroundGetProductByConditionDTO;
 import com.cyj.dvo.BackgroundGetProductDVO;
 import com.cyj.dvo.BackgroundGetProductDetailDVO;
 
-public interface ProductManagementService {
+/**
+ * 后台商品查询：商品数据由商家服务提供，本服务经服务间调用获取
+ */
+public interface AdminProductQueryService {
 
     /**
      * 查询商品列表

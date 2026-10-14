@@ -17,7 +17,7 @@ import java.util.List;
  * 图像管理
  */
 @RestController
-@RequestMapping("/api/admin/image")
+@RequestMapping("/api/file/image")
 public class ImageManagementController {
     @Autowired
     private ImageManagementService imageManagementService;
@@ -25,7 +25,7 @@ public class ImageManagementController {
      * 查询主页背景图片列表
      */
     @GetMapping("/getHomeBackGroundImageList")
-    private Result<PageResult<HomeBackgroundImageDVO>> getHomeBackGroundImageList(int pageNum, Long pageSize) {
+    public Result<PageResult<HomeBackgroundImageDVO>> getHomeBackGroundImageList(int pageNum, Long pageSize) {
         return imageManagementService.getHomeBackGroundImageList(pageNum,pageSize);
     }
     /**

@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service("adminLoginServiceImpl")
 @Slf4j
-public class LoginServiceImpl implements AdminService {
+public class AdminLoginServiceImpl implements AdminService {
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired

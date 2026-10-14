@@ -369,4 +369,24 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         return Result.success(true);
     }
 
+    /**
+     * 按管理员id取用户名（其他服务需要操作人/审计名时使用）
+     * @param id 管理员id
+     * @return 返回管理员用户名
+     */
+    @Override
+    public Result<String> getAdminNameById(Long id) {
+        if(id == null){
+            return Result.error("管理员id为空");
+        }
+        Admin admin = adminMapper.selectById(id);
+        if(admin == null){
+            return Result.error("管理员不存在");
+        }
+        //管理员名要放进 data：Result.success(String) 重载会把值塞进 msg，所以这里手工塞 data
+        Result<String> result = Result.success();
+        result.setData(admin.getUsername());
+        return result;
+    }
+
 }

@@ -1,17 +1,16 @@
-package com.cyj.service.userService.impl;
+package com.cyj.service.merchantService.impl;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cyj.common.Result;
-import com.cyj.constant.RedissonKey;
-import com.cyj.dto.UserLoginDTO;
+import com.cyj.dto.MerchantLoginDTO;
 import com.cyj.dvo.AccessTokenDVO;
-import com.cyj.dvo.UserInformationDVO;
-import com.cyj.entity.User;
-import com.cyj.mapper.UserMapper;
-import com.cyj.service.userService.UserService;
+import com.cyj.entity.Merchant;
+import com.cyj.mapper.MerchantMapper;
+import com.cyj.service.merchantService.MerchantService;
 import com.cyj.utils.JwtUtil;
 import com.cyj.utils.RedissonUtil;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,23 +22,26 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-@Service("userLoginServiceImpl")
+@Service("merchantLoginServiceImpl")
 @Slf4j
-public class LoginServiceImpl implements UserService {
+public class MerchantLoginServiceImpl implements MerchantService {
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
     private RedissonUtil redissonUtil;
+
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
-    private UserMapper userMapper;
+    private MerchantMapper merchantMapper;
+
     @Override
-    public Result<AccessTokenDVO> userLogin(UserLoginDTO userLoginDTO) {
+    public Result<AccessTokenDVO> merchantLogin(MerchantLoginDTO merchantLoginDTO) {
+
 
 
         Authentication authentication = authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(userLoginDTO.getUsername(), userLoginDTO.getPassword()));
+                .authenticate(new UsernamePasswordAuthenticationToken(merchantLoginDTO.getMerchantName(), merchantLoginDTO.getMerchantPassword()));
         if (authentication == null || !authentication.isAuthenticated()) {
             log.error("登陆认证失败");
         }
@@ -50,23 +52,24 @@ public class LoginServiceImpl implements UserService {
             Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
             authorities.forEach(grantedAuthority -> roles.add(grantedAuthority.getAuthority()));
         }
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username", userLoginDTO.getUsername());
-        User user = userMapper.selectOne(queryWrapper);
+        QueryWrapper<Merchant> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("Merchant_name", merchantLoginDTO.getMerchantName());
+        Merchant merchant = merchantMapper.selectOne(queryWrapper);
 
         //生成访问令牌
-        Map<String,Object> accessclaims = new HashMap<>();
-        accessclaims.put("id",user.getId().toString());
-        accessclaims.put("roles", roles);
-        String accessToken = jwtUtil.generateAccessToken(accessclaims);
+        Map<String,Object> accessClaims = new HashMap<>();
+        accessClaims.put("id",merchant.getMerchantId().toString());
+        accessClaims.put("roles", roles);
+        String accessToken = jwtUtil.generateAccessToken(accessClaims);
+
         //生成刷新令牌
-        Map<String,Object> refreshclaims = new HashMap<>();
-        refreshclaims.put("id",user.getId().toString());
-        refreshclaims.put("roles", roles);
-        String refreshToken = jwtUtil.generaterefreshToken(refreshclaims);
+        Map<String,Object> refreshClaims = new HashMap<>();
+        refreshClaims.put("id",merchant.getMerchantId().toString());
+        refreshClaims.put("roles", roles);
+        String refreshToken = jwtUtil.generaterefreshToken(refreshClaims);
 
         //将刷新令牌存入缓存
-        String key = "toke" + ":user:" + userLoginDTO.getUsername();
+        String key = "toke" + ":merchant:" + merchant.getMerchantName();
         redissonUtil.setValue(key, refreshToken,7,TimeUnit.DAYS);
 
         AccessTokenDVO accessTokenDVO = AccessTokenDVO.builder()
@@ -74,10 +77,6 @@ public class LoginServiceImpl implements UserService {
                 .refresh_token_key(key)
                 .build();
 
-        //将用户信息存入缓存
-        UserInformationDVO userInformationDVO = UserInformationDVO.toUserInformationDVO(user);
-        String userKey = RedissonKey.INFORMATION_USER_KEY + user.getId();
-        redissonUtil.setValue(userKey, userInformationDVO,7,TimeUnit.DAYS);
         //返回访问令牌
         return Result.success(accessTokenDVO);
     }

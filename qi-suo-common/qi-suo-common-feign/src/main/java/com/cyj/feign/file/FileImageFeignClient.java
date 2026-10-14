@@ -1,7 +1,7 @@
-package com.cyj.feign.admin;
+package com.cyj.feign.file;
 
 
-import com.cyj.back.AdminImageFeignClientFallBack;
+import com.cyj.back.FileImageFeignClientFallBack;
 import com.cyj.common.Result;
 import com.cyj.dvo.CarouselImageDVO;
 import com.cyj.dvo.HomeBackgroundImageDVO;
@@ -11,18 +11,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.List;
 //
-@FeignClient(value = "qi-suo-file",fallback = AdminImageFeignClientFallBack.class)
+@FeignClient(value = "qi-suo-file",fallback = FileImageFeignClientFallBack.class)
 @Primary
-public interface AdminImageFeignClient {
+public interface FileImageFeignClient {
     /**
      * 查询主页轮播图片列表
      */
-    @GetMapping("/api/admin/image/getCarouselImageList")
+    @GetMapping("/api/file/image/getCarouselImageList")
     Result<List<CarouselImageDVO>> getCarouselImageList();
 
     /**
      * 获取登陆界面图片
      */
-    @GetMapping("/api/admin/image/getNowHomeBackGroundImage")
+    @GetMapping("/api/file/image/getNowHomeBackGroundImage")
     Result<HomeBackgroundImageDVO> getNowHomeBackGroundImage();
 }

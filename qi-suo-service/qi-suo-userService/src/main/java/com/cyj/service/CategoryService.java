@@ -2,8 +2,6 @@ package com.cyj.service;
 
 import com.cyj.common.Result;
 import com.cyj.dvo.HomeCategoryDVO;
-import com.cyj.entity.Category;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -15,7 +13,7 @@ import java.util.List;
  * @author cyj
  * @since 2026-01-27
  */
-public interface CategoryService extends IService<Category> {
+public interface CategoryService {
 
     /**
      * 获取主页分类显示列表

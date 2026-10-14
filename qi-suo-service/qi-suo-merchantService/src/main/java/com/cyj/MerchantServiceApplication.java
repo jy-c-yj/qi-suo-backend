@@ -12,8 +12,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableFeignClients
 @EnableTransactionManagement
 public class MerchantServiceApplication {
-
-
     public static void main(String[] args) {
         SpringApplication.run(MerchantServiceApplication.class, args);
     }

@@ -67,4 +67,12 @@ public class AdminManagementController {
     public Result<Boolean> deleteAdmin(@PathVariable Long adminId){
         return adminManagementService.deleteAdmin(adminId);
     }
+
+    /**
+     *按管理员id取用户名（其他服务需要操作人/审计名时使用）
+     */
+    @GetMapping("/getAdminNameById")
+    public Result<String> getAdminNameById(@RequestParam Long id){
+        return adminManagementService.getAdminNameById(id);
+    }
 }

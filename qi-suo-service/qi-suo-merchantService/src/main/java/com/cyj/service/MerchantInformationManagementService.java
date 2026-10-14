@@ -4,7 +4,7 @@ import com.cyj.common.Result;
 import com.cyj.dto.UpdateMerchantInformationFormDTO;
 import com.cyj.dvo.MerchantInformationDVO;
 
-public interface MerchantInformationManagement {
+public interface MerchantInformationManagementService {
 
     public Result<MerchantInformationDVO> getMerchantInformation();
 

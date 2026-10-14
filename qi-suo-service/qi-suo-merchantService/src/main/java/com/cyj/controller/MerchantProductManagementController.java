@@ -74,7 +74,7 @@ public class MerchantProductManagementController {
      * 属性新增
      */
     @PostMapping("/newProductAttributeValue")
-    private Result<String> newProductAttributeValue(@RequestBody NewProductAttributeValueDTO newProductAttributeValueDTO) {
+    public Result<String> newProductAttributeValue(@RequestBody NewProductAttributeValueDTO newProductAttributeValueDTO) {
         return productManagementService.newProductAttributeValue(newProductAttributeValueDTO);
     }
 

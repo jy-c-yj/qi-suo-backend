@@ -4,7 +4,7 @@ package com.cyj.service.impl;
 import com.cyj.common.Result;
 import com.cyj.dvo.CarouselImageDVO;
 import com.cyj.dvo.HomeBackgroundImageDVO;
-import com.cyj.feign.admin.AdminImageFeignClient;
+import com.cyj.feign.file.FileImageFeignClient;
 import com.cyj.service.HomeImageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +16,10 @@ import java.util.List;
 @Slf4j
 public class HomeImageServiceImpl implements HomeImageService {
     @Autowired
-    private AdminImageFeignClient adminImageFeignClient;
+    private FileImageFeignClient fileImageFeignClient;
     @Override
     public Result<String> getBackGroundImage() {
-        Result<HomeBackgroundImageDVO> result = adminImageFeignClient.getNowHomeBackGroundImage();
+        Result<HomeBackgroundImageDVO> result = fileImageFeignClient.getNowHomeBackGroundImage();
 
         if(result.getCode() == 0){
             return Result.error(result.getMsg());
@@ -34,7 +34,7 @@ public class HomeImageServiceImpl implements HomeImageService {
 
     @Override
     public Result<List<String>> getCarouselImageList() {
-        Result<List<CarouselImageDVO>> result = adminImageFeignClient.getCarouselImageList();
+        Result<List<CarouselImageDVO>> result = fileImageFeignClient.getCarouselImageList();
 
         if(result.getCode() == 0){
             return Result.error(result.getMsg());

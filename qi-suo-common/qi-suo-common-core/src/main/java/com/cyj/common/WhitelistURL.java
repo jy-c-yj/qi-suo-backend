@@ -12,7 +12,7 @@ public class WhitelistURL {    /**
     /**
      * 注册接口
      */
-    public static final String User_Register_Url = "/api/user/register";
+    public static final String User_Register_Url = "/api/auth/user/register";
 
     /**
      * 登陆界面背景图片显示

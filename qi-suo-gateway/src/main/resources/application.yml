@@ -15,30 +15,14 @@ spring:
           uri: lb://qi-suo-auth
           predicates:
             - Path=/api/auth/**
-        - id: user-register-route
-          uri: lb://qi-suo-auth
-          predicates:
-            - Path=/api/user/register
         - id: user-route
           uri: lb://qi-suo-user
           predicates:
             - Path=/api/user/**
-        - id: admin-image-route
-          uri: lb://qi-suo-file
-          predicates:
-            - Path=/api/admin/image/**
         - id: admin-route
           uri: lb://qi-suo-admin
           predicates:
             - Path=/api/admin/**
-        - id: merchant-category-attribute-route
-          uri: lb://qi-suo-admin
-          predicates:
-            - Path=/api/merchant/CategoryAndAttribute/**
-        - id: merchant-register-route
-          uri: lb://qi-suo-auth
-          predicates:
-            - Path=/api/merchant/register
         - id: merchant-route
           uri: lb://qi-suo-merchant
           predicates:

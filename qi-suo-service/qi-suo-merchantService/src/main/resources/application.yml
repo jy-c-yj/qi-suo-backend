@@ -6,6 +6,7 @@ spring:
     include:
       - redisson
       - mybatis
+      - feign
   application:
     name: qi-suo-merchant
   cloud:

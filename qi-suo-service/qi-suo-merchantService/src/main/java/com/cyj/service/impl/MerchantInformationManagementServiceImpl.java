@@ -5,7 +5,7 @@ import com.cyj.dto.UpdateMerchantInformationFormDTO;
 import com.cyj.dvo.MerchantInformationDVO;
 import com.cyj.entity.Merchant;
 import com.cyj.mapper.MerchantMapper;
-import com.cyj.service.MerchantInformationManagement;
+import com.cyj.service.MerchantInformationManagementService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class MerchantInformationManagementImpl implements MerchantInformationManagement {
+public class MerchantInformationManagementServiceImpl implements MerchantInformationManagementService {
     @Autowired
     private MerchantMapper merchantMapper;
     @Autowired

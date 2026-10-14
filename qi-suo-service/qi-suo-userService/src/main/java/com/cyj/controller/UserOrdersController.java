@@ -1,7 +1,9 @@
 package com.cyj.controller;
 
 
+import com.cyj.common.PageResult;
 import com.cyj.common.Result;
+import com.cyj.dvo.MerchantOrdersDVO;
 import com.cyj.dvo.UserOrdersDVO;
 import com.cyj.dvo.UserOrdersDetailDVO;
 import com.cyj.service.UserOrdersService;
@@ -42,6 +44,20 @@ public class UserOrdersController {
     @GetMapping("/confirm")
     public Result<String> confirm(@RequestParam Long orderId) {
         return userOrdersService.confirm(orderId);
+    }
+
+    //商家维度的订单列表（供商家服务经服务间调用使用）
+    @GetMapping("/merchantList")
+    public PageResult<MerchantOrdersDVO> merchantList(@RequestParam Long merchantId,
+                                                     @RequestParam Integer pageNum,
+                                                     @RequestParam Integer pageSize) {
+        return userOrdersService.merchantList(merchantId, pageNum, pageSize);
+    }
+
+    //商家发货（供商家服务经服务间调用使用）
+    @GetMapping("/setStatus")
+    public Result<String> setStatus(@RequestParam Long orderId) {
+        return userOrdersService.setOrdersStatus(orderId);
     }
 
 }

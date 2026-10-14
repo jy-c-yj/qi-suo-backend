@@ -6,6 +6,7 @@ spring:
     include:
       - minio
       - mybatis
+      - feign
   application:
     name: qi-suo-file
   cloud:

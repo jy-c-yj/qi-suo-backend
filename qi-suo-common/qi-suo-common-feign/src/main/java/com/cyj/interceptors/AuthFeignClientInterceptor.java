@@ -1,4 +1,4 @@
-package com.interceptors;
+package com.cyj.interceptors;
 
 
 import com.alibaba.fastjson.JSON;
@@ -15,7 +15,7 @@ import java.util.List;
 public class AuthFeignClientInterceptor implements RequestInterceptor {
     @Override
     public void apply(RequestTemplate template) {
-        log.info("FileFeignClientInterceptor 请求拦截器启动");
+        log.info("AuthFeignClientInterceptor 请求拦截器启动");
         JwtClaimType jwtClaimType = new JwtClaimType();
 
         jwtClaimType.setId(Long.parseLong("-1"));

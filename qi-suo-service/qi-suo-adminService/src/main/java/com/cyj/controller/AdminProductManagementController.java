@@ -6,7 +6,7 @@ import com.cyj.common.Result;
 import com.cyj.dto.BackgroundGetProductByConditionDTO;
 import com.cyj.dvo.BackgroundGetProductDVO;
 import com.cyj.dvo.BackgroundGetProductDetailDVO;
-import com.cyj.service.ProductManagementService;
+import com.cyj.service.AdminProductQueryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminProductManagementController {
 
     @Autowired
-    private ProductManagementService productManagementService;
+    private AdminProductQueryService productManagementService;
 
     /**
      * 获取商品列表

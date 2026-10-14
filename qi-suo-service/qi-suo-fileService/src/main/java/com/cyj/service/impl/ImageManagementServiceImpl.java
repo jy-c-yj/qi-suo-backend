@@ -6,19 +6,21 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyj.common.PageResult;
 import com.cyj.common.Result;
 import com.cyj.constant.RedissonKey;
+import com.cyj.constants.RoleConstants;
 import com.cyj.dto.CarouselImageDetailsDTO;
 import com.cyj.dvo.CarouselImageDVO;
 import com.cyj.dvo.HomeBackgroundImageDVO;
-import com.cyj.entity.Admin;
 import com.cyj.entity.CarouselImage;
 import com.cyj.entity.HomeBackgroundImage;
-import com.cyj.mapper.AdminMapper;
+import com.cyj.feign.admin.AdminNameFeignClient;
 import com.cyj.mapper.CarouselImageMapper;
 import com.cyj.mapper.HomeBackgroundImageMapper;
 import com.cyj.service.ImageManagementService;
 import com.cyj.utils.MinIOUtils;
 import com.cyj.utils.RedissonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,10 +43,34 @@ public class ImageManagementServiceImpl implements ImageManagementService {
     private HomeBackgroundImageMapper homeBackgroundImageMapper;
 
     @Autowired
-    private AdminMapper adminMapper;
+    private AdminNameFeignClient adminNameFeignClient;
 
     @Autowired
     private RedissonUtil redissonUtil;
+
+    /**
+     * 取当前操作管理员名：管理员信息归管理服务所有，这里走服务间调用。
+     * 注意 Feign 拦截器会把调用身份固定成 -1，所以管理员 id 必须作为参数显式传过去。
+     */
+    private Result<String> currentAdminName() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof Long)) {
+            return Result.error("获取操作人失败");
+        }
+        List<String> roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+        if (!roles.contains(RoleConstants.OrdinaryADMIN)
+                && !roles.contains(RoleConstants.SuperADMIN)
+                && !roles.contains(RoleConstants.SystemADMIN)) {
+            return Result.error("获取操作人失败");
+        }
+        Result<String> adminNameResult = adminNameFeignClient.getAdminNameById((Long) authentication.getPrincipal());
+        if (adminNameResult.getCode() == 0) {
+            return Result.error("获取操作人失败");
+        }
+        return adminNameResult;
+    }
 
     /**
      * 上传图片到对象存储并返回访问地址。
@@ -142,13 +168,16 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         carouselImage.setUrl(url);
         carouselImage.setUid(file.getOriginalFilename() + UUID.randomUUID());
         carouselImage.setIsEnabled(true);
-        //查找操作人
-        Long id = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Admin admin = adminMapper.selectById(id);
+        //查找操作人（管理员信息由管理服务提供）
+        Result<String> adminNameResult = currentAdminName();
+        if(adminNameResult.getCode() == 0){
+            return Result.error("获取操作人失败");
+        }
+        String adminName = adminNameResult.getData();
 
-        carouselImage.setCreatedBy(admin.getUsername());
+        carouselImage.setCreatedBy(adminName);
         carouselImage.setCreatedTime(LocalDateTime.now());
-        carouselImage.setModifiedBy(admin.getUsername());
+        carouselImage.setModifiedBy(adminName);
         carouselImage.setModifiedTime(LocalDateTime.now());
 
         carouselImageMapper.insert(carouselImage);
@@ -181,9 +210,12 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         queryWrapper.eq("is_deleted",false);
         List<CarouselImage> carouselImageList = carouselImageMapper.selectList(queryWrapper);
 
-        //查找操作人
-        Long id = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Admin admin = adminMapper.selectById(id);
+        //查找操作人（管理员信息由管理服务提供）
+        Result<String> adminNameResult = currentAdminName();
+        if(adminNameResult.getCode() == 0){
+            return Result.error("获取操作人失败");
+        }
+        String adminName = adminNameResult.getData();
 
         //刷新缓存
         if(!carouselImageList.isEmpty() && !redissonUtil.getList(RedissonKey.IMAGE_CAROUSEL_KEY).isEmpty()){
@@ -194,7 +226,7 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         carouselImageList.forEach(image -> {
             if(image.getUid().equals(imageUid)){
                 image.setIsEnabled(true);
-                image.setModifiedBy(admin.getUsername());
+                image.setModifiedBy(adminName);
                 //更新数据库
                 QueryWrapper<CarouselImage> queryWrapper_ = new QueryWrapper<>();
                 queryWrapper_.eq("uid",imageUid);
@@ -229,9 +261,12 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         queryWrapper.eq("is_deleted",false);
         List<CarouselImage> carouselImageList = carouselImageMapper.selectList(queryWrapper);
 
-        //查找操作人
-        Long id = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Admin admin = adminMapper.selectById(id);
+        //查找操作人（管理员信息由管理服务提供）
+        Result<String> adminNameResult = currentAdminName();
+        if(adminNameResult.getCode() == 0){
+            return Result.error("获取操作人失败");
+        }
+        String adminName = adminNameResult.getData();
 
         //刷新缓存
         if(!carouselImageList.isEmpty() && !redissonUtil.getList(RedissonKey.IMAGE_CAROUSEL_KEY).isEmpty()){
@@ -241,7 +276,7 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         carouselImageList.forEach(image -> {
             if(image.getUid().equals(imageUid)){
                 image.setIsEnabled(false);
-                image.setModifiedBy(admin.getUsername());
+                image.setModifiedBy(adminName);
                 //更新数据库
                 QueryWrapper<CarouselImage> queryWrapper_ = new QueryWrapper<>();
                 queryWrapper_.eq("uid",imageUid);
@@ -276,9 +311,12 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         queryWrapper.eq("is_deleted",false);
         List<CarouselImage> carouselImageList = carouselImageMapper.selectList(queryWrapper);
 
-        //查找操作人
-        Long id = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Admin admin = adminMapper.selectById(id);
+        //查找操作人（管理员信息由管理服务提供）
+        Result<String> adminNameResult = currentAdminName();
+        if(adminNameResult.getCode() == 0){
+            return Result.error("获取操作人失败");
+        }
+        String adminName = adminNameResult.getData();
 
         //刷新缓存
         if(!carouselImageList.isEmpty() && !redissonUtil.getList(RedissonKey.IMAGE_CAROUSEL_KEY).isEmpty()){
@@ -288,7 +326,7 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         carouselImageList.forEach(image -> {
             if(image.getUid().equals(imageUid)){
                 image.setIsDeleted(true);
-                image.setModifiedBy(admin.getUsername());
+                image.setModifiedBy(adminName);
                 //更新数据库
                 QueryWrapper<CarouselImage> queryWrapper_ = new QueryWrapper<>();
                 queryWrapper_.eq("uid",imageUid);
@@ -330,10 +368,12 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         carouselImage.setCreatedTime(carouselImageDetailsDTO.getCreatedTime());
         carouselImage.setModifiedTime(LocalDateTime.now());
         carouselImage.setCreatedBy(carouselImageDetailsDTO.getCreatedBy());
-        //查找操作人
-        Long id = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Admin admin = adminMapper.selectById(id);
-        carouselImage.setModifiedBy(admin.getUsername());
+        //查找操作人（管理员信息由管理服务提供）
+        Result<String> adminNameResult = currentAdminName();
+        if(adminNameResult.getCode() == 0){
+            return Result.error("获取操作人失败");
+        }
+        carouselImage.setModifiedBy(adminNameResult.getData());
         carouselImageMapper.update(carouselImage,queryWrapper);
 
         //更新缓存

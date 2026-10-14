@@ -4,7 +4,7 @@ package com.cyj.controller;
 import com.cyj.common.Result;
 import com.cyj.dto.UpdateMerchantInformationFormDTO;
 import com.cyj.dvo.MerchantInformationDVO;
-import com.cyj.service.MerchantInformationManagement;
+import com.cyj.service.MerchantInformationManagementService;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.parameters.P;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class MerchantInformationManagementController {
 
     @Autowired
-    private MerchantInformationManagement merchantInformationManagement;
+    private MerchantInformationManagementService merchantInformationManagement;
     /**
      * 查询信息
      */

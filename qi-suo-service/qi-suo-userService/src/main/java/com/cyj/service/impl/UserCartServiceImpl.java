@@ -10,6 +10,7 @@ import com.cyj.dvo.UserOrdersDetailDVO;
 import com.cyj.entity.*;
 import com.cyj.exception.ProductIsNotExistException;
 import com.cyj.exception.ProductStockIsNotException;
+import com.cyj.feign.merchant.MerchantManagementFeignClient;
 import com.cyj.mapper.*;
 import com.cyj.service.UserCartService;
 import com.cyj.utils.RedissonUtil;
@@ -39,7 +40,7 @@ public class UserCartServiceImpl implements UserCartService {
     @Autowired
     private OrdersMapper ordersMapper;
     @Autowired
-    private MerchantMapper merchantMapper;
+    private MerchantManagementFeignClient merchantManagementFeignClient;
     @Autowired
     private OrderItemMapper orderItemMapper;
     @Autowired
@@ -238,11 +239,15 @@ public class UserCartServiceImpl implements UserCartService {
         UserAddress userAddress = userAddressMapper.selectById(addressId);
         userOrdersDetailDVO.setDetailAddress(userAddress.getDetailAddress());
         userOrdersDetailDVO.setUserAddressId(userAddress.getId());
-        //获取商家ming
-        Merchant merchant = merchantMapper.selectById(sellerId);
-        userOrdersDetailDVO.setMerchantName(merchant.getMerchantName());
+        //获取商家名（商家信息由商家服务提供）
+        Result<String> merchantNameResult = merchantManagementFeignClient.getMerchantNameById(sellerId);
+        if(merchantNameResult.getCode() == 0){
+            //与原先查不到商家时一致：抛异常让订单事务回滚
+            throw new RuntimeException("获取商家信息失败");
+        }
+        userOrdersDetailDVO.setMerchantName(merchantNameResult.getData());
         userOrdersDetailDVO.setStatus(orders.getStatus());
-        userOrdersDetailDVO.setMerchantId(merchant.getMerchantId());
+        userOrdersDetailDVO.setMerchantId(sellerId);
         //生成订单显示处商品列表
         List<OrdersProductShow> productList = new ArrayList<>();
         for(Cart cart : cartList){

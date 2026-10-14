@@ -14,7 +14,7 @@ import com.cyj.entity.Product;
 import com.cyj.entity.ProductAttributeValue;
 import com.cyj.entity.ProductCategory;
 import com.cyj.mapper.*;
-import com.cyj.service.MerchantInformationManagement;
+import com.cyj.service.MerchantInformationManagementService;
 import com.cyj.service.MerchantProductManagementService;
 import com.cyj.utils.RedissonUtil;
 import com.cyj.utils.SkuUtil;
