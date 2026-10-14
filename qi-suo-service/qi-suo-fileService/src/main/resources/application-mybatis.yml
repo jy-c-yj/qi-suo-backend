@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 1234
+    url: jdbc:mysql://localhost:3306/qi-suo?useSSL=false&serverTimezone=UTC
+    druid:
+      # 初始化时建立物理连接的个数
+      initial-size: 5
+      # 连接池的最小空闲数量
+      min-idle: 5
+      # 连接池最大连接数量
+      max-active: 20
+      # 获取连接时最大等待时间，单位毫秒
+      max-wait: 60000
+mybatis-plus:
+  #mapper配置文件
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.cyj.entity
+  global-config:
+    db-config:
+      id-type: auto
+    banner: false
+  configuration:
+    #开启驼峰命名
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+    # SQL 格式化配置
+    local-cache-scope: session
+    call-setters-on-nulls: true
+    auto-mapping-behavior: full
+logging:
+  level:
+    com.cyj.mapper: debug
+    java.sql: debug

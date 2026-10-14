@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.List;
 //
-@FeignClient(value = "qi-suo-admin",fallback = AdminImageFeignClientFallBack.class)
+@FeignClient(value = "qi-suo-file",fallback = AdminImageFeignClientFallBack.class)
 @Primary
 public interface AdminImageFeignClient {
     /**

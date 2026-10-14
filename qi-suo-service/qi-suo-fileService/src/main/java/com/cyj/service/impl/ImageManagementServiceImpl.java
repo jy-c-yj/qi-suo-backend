@@ -12,11 +12,11 @@ import com.cyj.dvo.HomeBackgroundImageDVO;
 import com.cyj.entity.Admin;
 import com.cyj.entity.CarouselImage;
 import com.cyj.entity.HomeBackgroundImage;
-import com.cyj.feign.file.FileFeign;
 import com.cyj.mapper.AdminMapper;
 import com.cyj.mapper.CarouselImageMapper;
 import com.cyj.mapper.HomeBackgroundImageMapper;
 import com.cyj.service.ImageManagementService;
+import com.cyj.utils.MinIOUtils;
 import com.cyj.utils.RedissonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,8 +33,6 @@ import java.util.UUID;
  */
 @Service
 public class ImageManagementServiceImpl implements ImageManagementService {
-    @Autowired
-    private FileFeign fileFeign;
 
     @Autowired
     private CarouselImageMapper carouselImageMapper;
@@ -47,6 +45,39 @@ public class ImageManagementServiceImpl implements ImageManagementService {
 
     @Autowired
     private RedissonUtil redissonUtil;
+
+    /**
+     * 上传图片到对象存储并返回访问地址。
+     * 原实现由管理服务经 FileFeign 调用文件服务的 POST /api/file/upload；
+     * 图片管理并入文件服务后改为本地直调，逻辑与 UploadController#upload 保持一致
+     * （失败时返回的 Result 与 Feign 降级回调 FileFeignBack 相同）。
+     */
+    private Result<String> uploadToMinio(MultipartFile file) {
+        if (file.isEmpty()) {
+            return Result.error("图片上传出错");
+        }
+        try {
+            String originalFilename = file.getOriginalFilename();
+            //获取文件类型
+            String extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1)
+                    .toLowerCase();
+
+            String fileName = UUID.randomUUID().toString() + "." + extension;
+
+            switch (extension) {
+                case "jpg":
+                case "jpeg":
+                    extension = "image/jpeg";
+                case "png":
+                    extension = "image/png";
+            }
+            MinIOUtils.uploadFile("qisuo", file, fileName, extension);
+            return Result.success(MinIOUtils.getBasisUrl() + fileName);
+        } catch (Exception e) {
+            return Result.error("文件上传失败");
+        }
+    }
+
     @Override
     public Result<List<CarouselImageDVO>> getCarouselImageList() {
         //查询redis
@@ -97,7 +128,7 @@ public class ImageManagementServiceImpl implements ImageManagementService {
     public Result<String> newCarouselImage(MultipartFile file, String description) {
         String url = null;
         try {
-            Result<String> result = fileFeign.upload(file);
+            Result<String> result = uploadToMinio(file);
             if(result.getCode() == 0){
                 return Result.error(result.getMsg());
             }
@@ -440,7 +471,7 @@ public class ImageManagementServiceImpl implements ImageManagementService {
     @Override
     public Result<String> newHomeBackGroundImage(MultipartFile file, String description) {
 
-        Result<String> result = fileFeign.upload(file);
+        Result<String> result = uploadToMinio(file);
         if(result.getCode() == 0){
             return Result.error(description);
         }
