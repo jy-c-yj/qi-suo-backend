@@ -68,7 +68,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
             loginUserDetails.setPassword(user.getPassword());
             loginUserDetails.setUsername(user.getUsername());
-            System.out.println("用户登陆");
+            log.info("用户登陆");
         }
 
         if (url.contains(HttpType.admin)){
@@ -92,7 +92,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             }).collect(Collectors.toList()));
             loginUserDetails.setPassword(admin.getPassword());
             loginUserDetails.setUsername(admin.getUsername());
-            System.out.println("管理员登陆");
+            log.info("管理员登陆");
         }
 
         if (url.contains(HttpType.merchant)){
