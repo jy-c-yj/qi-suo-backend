@@ -1,0 +1,13 @@
+### Maven 构建产物 ###
+target/
+
+### IntelliJ IDEA ###
+.idea/
+*.iml
+
+### Java 编译产物与日志 ###
+*.class
+*.log
+
+### 本地工具目录 ###
+.claude/
