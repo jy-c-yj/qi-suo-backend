@@ -2,12 +2,10 @@ package com.cyj.controller;
 
 
 import com.cyj.common.Result;
-import com.cyj.dto.MerchantRegisterDTO;
 import com.cyj.dvo.AttributeDVO;
 import com.cyj.dvo.AttributeValueDVO;
 import com.cyj.dvo.CategoryDVO;
 import com.cyj.service.CategoryAndAttributeService;
-import com.cyj.service.MerchantRegisterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
