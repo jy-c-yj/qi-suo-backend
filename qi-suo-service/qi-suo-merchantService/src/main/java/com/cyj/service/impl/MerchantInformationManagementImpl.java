@@ -1,4 +1,4 @@
-package com.cyj.service.Impl;
+package com.cyj.service.impl;
 
 import com.cyj.common.Result;
 import com.cyj.dto.UpdateMerchantInformationFormDTO;

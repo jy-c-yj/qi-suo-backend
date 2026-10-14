@@ -1,17 +1,19 @@
-package com.cyj.service.Impl;
-
+package com.cyj.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyj.common.OrdersProductShow;
+import com.cyj.common.PageResult;
 import com.cyj.common.Result;
-import com.cyj.dvo.UserOrdersDVO;
+import com.cyj.dvo.MerchantOrdersDVO;
 import com.cyj.dvo.UserOrdersDetailDVO;
-import com.cyj.entity.*;
+import com.cyj.entity.Merchant;
+import com.cyj.entity.OrderItem;
+import com.cyj.entity.Orders;
+import com.cyj.entity.Product;
 import com.cyj.mapper.*;
-import com.cyj.service.UserOrdersService;
-import lombok.AllArgsConstructor;
-import org.aspectj.weaver.ast.Or;
+import com.cyj.service.MerchantOrdersService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class UserOrdersServiceImpl implements UserOrdersService {
+@Slf4j
+public class MerchantOrdersServiceImpl implements MerchantOrdersService {
     @Autowired
     private OrdersMapper ordersMapper;
     @Autowired
@@ -32,29 +35,23 @@ public class UserOrdersServiceImpl implements UserOrdersService {
     @Autowired
     private MerchantMapper merchantMapper;;
     @Override
-    public Result<List<UserOrdersDVO>> list() {
-        //获取用户id
-        Long userID = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        //查询数据库，获取订单列表
-        List<Orders> list = ordersMapper.selectList (new QueryWrapper<Orders>().eq("user_id",userID));
-        //返回结果
-        List<UserOrdersDVO> list1 = new ArrayList<>();
-        for (Orders orders : list){
-            UserOrdersDVO userOrdersDVO = new UserOrdersDVO();
-            userOrdersDVO.setId(orders.getId());
-            userOrdersDVO.setOrderNo(orders.getOrderNo());
-            Merchant merchant = merchantMapper.selectById(orders.getMerchantId());
-            userOrdersDVO.setMerchantName(merchant.getMerchantName());
-            userOrdersDVO.setTotalAmount(orders.getTotalAmount());
-            userOrdersDVO.setStatus(orders.getStatus());
-            userOrdersDVO.setCreatedAt(orders.getCreatedAt());
-            list1.add(userOrdersDVO);
-        }
-        return Result.success(list1);
+    public PageResult<MerchantOrdersDVO> getOrders(Integer pageNum, Integer pageSize) {
+        log.info("分页查询所有订单列表");
+
+        //获取商家id
+        Long merchantId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        //分页查询所有订单列表
+        Page<Orders> page = new Page<>(pageNum,pageSize);
+        List<Orders> ordersList = ordersMapper.selectList(page,new QueryWrapper<Orders>().eq("merchant_id",merchantId));
+        List<MerchantOrdersDVO> list = ordersList.stream().map(MerchantOrdersDVO::toMerchantOrdersDVO).toList();
+        PageResult<MerchantOrdersDVO> pageResult = new PageResult<>();
+        pageResult.setRows(list);
+        pageResult.setTotal(page.getTotal());
+        return pageResult;
     }
 
     @Override
-    public Result<UserOrdersDetailDVO> detail(Long orderId) {
+    public Result<UserOrdersDetailDVO> getOrdersDetail(Long orderId) {
         //获取订单
         Orders orders = ordersMapper.selectById(orderId);
 
@@ -93,35 +90,18 @@ public class UserOrdersServiceImpl implements UserOrdersService {
     }
 
     @Override
-    public Result<String> pay(Long orderId) {
-        //支付操作，默认成功
-        Boolean success = true;
-        //更改订单状态
-        try {
-            if (success) {
-                Orders orders = new Orders();
-                orders.setId(orderId);
-                orders.setStatus("已支付");
-                ordersMapper.updateById(orders);
-                return Result.success("支付成功");
-            }
-        } catch (Exception e) {
-            return Result.error("支付失败");
+    public Result<String> setOrdersStatus(Long orderId) {
+        //查询订单
+        Orders orders = ordersMapper.selectById(orderId);
+        //设置订单状态
+        if(orders.getStatus().equals("未支付")){
+            return Result.error("订单未支付");
         }
-        return Result.error("支付失败");
-    }
-
-    @Override
-    public Result<String> confirm(Long orderId) {
-        //确认订单完成
-        try {
-            Orders orders = new Orders();
-            orders.setId(orderId);
-            orders.setStatus("已完成");
+        if(orders.getStatus().equals("已支付")){
+            orders.setStatus("已发货");
             ordersMapper.updateById(orders);
-            return Result.success("确认成功");
-        } catch (Exception e) {
-            return Result.error("确认失败");
+            return Result.success("订单状态修改成功");
         }
+        return Result.error("订单状态错误");
     }
 }

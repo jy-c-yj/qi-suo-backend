@@ -1,4 +1,4 @@
-package com.cyj.service.Impl;
+package com.cyj.service.impl;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;

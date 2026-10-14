@@ -1,13 +1,13 @@
-package com.cyj.service.adminService.Impl;
+package com.cyj.service.merchantService.impl;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cyj.common.Result;
-import com.cyj.dto.AdminLoginDTO;
+import com.cyj.dto.MerchantLoginDTO;
 import com.cyj.dvo.AccessTokenDVO;
-import com.cyj.entity.Admin;
-import com.cyj.mapper.AdminMapper;
-import com.cyj.service.adminService.AdminService;
+import com.cyj.entity.Merchant;
+import com.cyj.mapper.MerchantMapper;
+import com.cyj.service.merchantService.MerchantService;
 import com.cyj.utils.JwtUtil;
 import com.cyj.utils.RedissonUtil;
 
@@ -19,31 +19,29 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-@Service("adminLoginServiceImpl")
+@Service("merchantLoginServiceImpl")
 @Slf4j
-public class LoginServiceImpl implements AdminService {
+public class LoginServiceImpl implements MerchantService {
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
     private RedissonUtil redissonUtil;
-    @Autowired
-    private HttpServletRequest request;
+
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
-    private AdminMapper adminMapper;
+    private MerchantMapper merchantMapper;
 
     @Override
-    public Result<AccessTokenDVO> adminLogin(AdminLoginDTO adminLoginDTO) {
+    public Result<AccessTokenDVO> merchantLogin(MerchantLoginDTO merchantLoginDTO) {
 
-        String url = request.getRequestURI();
+
 
         Authentication authentication = authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(adminLoginDTO.getUsername(), adminLoginDTO.getPassword()));
+                .authenticate(new UsernamePasswordAuthenticationToken(merchantLoginDTO.getMerchantName(), merchantLoginDTO.getMerchantPassword()));
         if (authentication == null || !authentication.isAuthenticated()) {
             log.error("登陆认证失败");
         }
@@ -54,26 +52,24 @@ public class LoginServiceImpl implements AdminService {
             Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
             authorities.forEach(grantedAuthority -> roles.add(grantedAuthority.getAuthority()));
         }
-
-        QueryWrapper<Admin> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username", adminLoginDTO.getUsername());
-        Admin admin = adminMapper.selectOne(queryWrapper);
+        QueryWrapper<Merchant> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("Merchant_name", merchantLoginDTO.getMerchantName());
+        Merchant merchant = merchantMapper.selectOne(queryWrapper);
 
         //生成访问令牌
         Map<String,Object> accessClaims = new HashMap<>();
-        accessClaims.put("id",admin.getAdminId().toString());
+        accessClaims.put("id",merchant.getMerchantId().toString());
         accessClaims.put("roles", roles);
         String accessToken = jwtUtil.generateAccessToken(accessClaims);
 
-
         //生成刷新令牌
         Map<String,Object> refreshClaims = new HashMap<>();
-        refreshClaims.put("id",admin.getAdminId().toString());
+        refreshClaims.put("id",merchant.getMerchantId().toString());
         refreshClaims.put("roles", roles);
         String refreshToken = jwtUtil.generaterefreshToken(refreshClaims);
 
         //将刷新令牌存入缓存
-        String key = "toke" + ":admin:" + adminLoginDTO.getUsername();
+        String key = "toke" + ":merchant:" + merchant.getMerchantName();
         redissonUtil.setValue(key, refreshToken,7,TimeUnit.DAYS);
 
         AccessTokenDVO accessTokenDVO = AccessTokenDVO.builder()
