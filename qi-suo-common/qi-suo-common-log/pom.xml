@@ -15,4 +15,39 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencies>
+        <!-- com.cyj.common.TraceConstants：链路 id 的头名 / MDC 键，与网关、common-feign 共用 -->
+        <dependency>
+            <groupId>com.cyj</groupId>
+            <artifactId>qi-suo-common-core</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+        <!--
+          只为编译 TraceIdMdcFilter 用的 OncePerRequestFilter / jakarta.servlet。
+          optional=true 是关键：不向下传递，否则网关（WebFlux）会被带上 spring-webmvc 而启动失败。
+          各业务服务自己已声明 spring-boot-starter-web，运行时并不缺。
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cyj</groupId>
+            <artifactId>qi-suo-common-rabbitMQ</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+        </dependency>
+    </dependencies>
+
 </project>

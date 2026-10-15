@@ -71,10 +71,7 @@
         user updater ON m.update_by = updater.id
         WHERE
         m.is_deleted = 0
-        <if test="condition.merchantName != null and condition.merchantName.trim != ''">
-            AND m.merchant_name LIKE CONCAT('%', #{condition.merchantName}, '%')
-        </if>
-        <if test="condition.merchantName != null and condition.merchantName.trim != ''">
+        <if test="condition.merchantName != null and condition.merchantName.trim() != ''">
             AND m.merchant_name LIKE CONCAT('%', #{condition.merchantName}, '%')
         </if>
         <if test="condition.id != null">
@@ -86,6 +83,4 @@
         ORDER BY
         m.create_time DESC
     </select>
-
-
 </mapper>

@@ -5,6 +5,7 @@ spring:
   profiles:
     include:
       - mybatis
+      - mq
   application:
     name: qi-suo-auth
   cloud:

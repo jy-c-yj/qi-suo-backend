@@ -7,6 +7,7 @@ spring:
       - redisson
       - mybatis
       - feign
+      - mq
   application:
     name: qi-suo-merchant
   cloud:
