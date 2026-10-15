@@ -19,10 +19,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-    <!--
-      与 qi-suo-common 对齐：sys 下的模块同样需要 lombok，
-      且 MyBatis-Plus 的注解（@TableName/@TableId）经由 qi-suo-pojo 传递而来。
-    -->
+
     <dependencies>
         <dependency>
             <groupId>com.cyj</groupId>

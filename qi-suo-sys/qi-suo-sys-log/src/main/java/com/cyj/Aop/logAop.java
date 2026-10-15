@@ -47,6 +47,14 @@ public class logAop {
     private static final int MAX_PARAM_LEN = 4096;
 
     /**
+     * uri / role_name 的列宽都是 VARCHAR(255)。
+     * 落库端用的是 ON DUPLICATE KEY UPDATE（只忽略唯一键冲突），字段超长会抛异常整批进死信，
+     * 所以必须在这里截断，而不是指望数据库帮忙。
+     */
+    private static final int MAX_URI_LEN = 255;
+    private static final int MAX_ROLE_LEN = 255;
+
+    /**
      * 需要脱敏的字段名（统一转小写后比对）
      */
     private static final Set<String> SENSITIVE_KEYS = Set.of(
@@ -106,7 +114,7 @@ public class logAop {
 
         if (attributes != null) {                            // 定时任务 / MQ 消费者里取不到
             HttpServletRequest request = attributes.getRequest();
-            operLog.setUri(request.getRequestURI());
+            operLog.setUri(truncate(request.getRequestURI(), MAX_URI_LEN));
             operLog.setHttpMethod(request.getMethod());
             operLog.setClientIp(resolveClientIp(request));
         }
@@ -118,7 +126,7 @@ public class logAop {
             // 未登录、匿名（principal 是字符串 "anonymousUser"）、或非请求线程
             operLog.setUserId(UNKNOWN_USER_ID);
         }
-        operLog.setRoleName(currentRoles(authentication));
+        operLog.setRoleName(truncate(currentRoles(authentication), MAX_ROLE_LEN));
     }
 
     /**
@@ -175,6 +183,7 @@ public class logAop {
 
     /**
      * 投递 MQ：失败只记本地日志，绝不让它冒泡影响业务
+     *
      */
     private void sendLog(SysOperLog operLog) {
         try {

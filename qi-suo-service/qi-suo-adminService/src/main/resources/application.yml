@@ -15,4 +15,13 @@ spring:
       server-addr: 127.0.0.1:8848
 
 
+# 接口日志消费者：只有 admin 打开，其余 4 个服务连 bean 都不注册
+qi-suo:
+  log:
+    consumer-enabled: true
+    batch-size: 100               # 攒多少条
+    batch-receive-timeout-ms: 1000
+    prefetch: 100
+
+
 
