@@ -81,7 +81,7 @@
 
         <dependency>
             <groupId>com.cyj</groupId>
-            <artifactId>qi-suo-common-log</artifactId>
+            <artifactId>qi-suo-sys-log</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
 

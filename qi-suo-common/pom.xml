@@ -19,7 +19,6 @@
         <module>qi-suo-common-mybatis</module>
         <module>qi-suo-common-feign</module>
         <module>qi-suo-common-rabbitMQ</module>
-        <module>qi-suo-common-log</module>
     </modules>
 
     <properties>

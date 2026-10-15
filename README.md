@@ -13,7 +13,9 @@ Spring Cloud 多模块工程（Spring Boot 3.3.4 / Spring Cloud 2023.0.3 / Sprin
 | 管理服务 | `qi-suo-adminService` | 8081 | `/api/admin/**` | 管理员、商品审核、分类与属性（读+写）、商家与用户管理 |
 | 文件服务 | `qi-suo-fileService` | 8083 | `/api/file/**` | 对象存储上传、**图片元数据/轮播图/主页背景图管理** |
 
-公共模块：`qi-suo-pojo`（实体/DTO/DVO）、`qi-suo-common-core`、`qi-suo-common-security`、`qi-suo-common-mybatis`、`qi-suo-common-redisson`、`qi-suo-common-minio`、`qi-suo-common-feign`、`qi-suo-common-log`。
+公共模块：`qi-suo-pojo`（实体/DTO/DVO）、`qi-suo-common-core`、`qi-suo-common-security`、`qi-suo-common-mybatis`、`qi-suo-common-redisson`、`qi-suo-common-minio`、`qi-suo-common-feign`。
+
+系统模块（`qi-suo-sys`）：`qi-suo-sys-log`（接口请求日志 —— AOP 采集、traceId 贯穿、RabbitMQ 落库）。
 
 ## 二、接口归属
 

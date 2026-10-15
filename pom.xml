@@ -18,6 +18,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>qi-suo-common</module>
+        <module>qi-suo-sys</module>
         <module>qi-suo-service</module>
         <module>qi-suo-pojo</module>
         <module>qi-suo-test</module>

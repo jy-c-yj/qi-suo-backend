@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  放在 qi-suo-common-log 的 resources 根下，各服务只要依赖本模块就自动生效，无需每个服务各配一份。
+  放在 qi-suo-sys-log 的 resources 根下，各服务只要依赖本模块就自动生效，无需每个服务各配一份。
   traceId 由 com.cyj.filter.TraceIdMdcFilter 写入 MDC，这里用 %X{traceId:-} 取，
   取不到时输出空串，不会让格式错位。
 -->

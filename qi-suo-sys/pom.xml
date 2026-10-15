@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.cyj</groupId>
+        <artifactId>qi-suo</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>qi-suo-sys</artifactId>
+    <packaging>pom</packaging>
+    <modules>
+        <module>qi-suo-sys-log</module>
+    </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!--
+      与 qi-suo-common 对齐：sys 下的模块同样需要 lombok，
+      且 MyBatis-Plus 的注解（@TableName/@TableId）经由 qi-suo-pojo 传递而来。
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>com.cyj</groupId>
+            <artifactId>qi-suo-pojo</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>
