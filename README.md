@@ -1,6 +1,6 @@
 # 栖所 qi-suo · 后端
 
-家居电商方向的 Spring Cloud 微服务后端。一个网关统一入口，按角色承载**用户端 / 商家端 / 管理端**三端；服务间通过 Feign 协作，跨服务的数据各归其主（归属表见 [docs/architecture.md](docs/architecture.md)）。
+家居电商方向的 Spring Cloud 微服务后端。一个网关统一入口，按角色承载**用户端 / 商家端 / 管理端**三端；服务间通过 Feign 协作，跨服务的数据各归其主。
 
 前端（Vue 3 + Vite + Element Plus）在独立仓库。
 
