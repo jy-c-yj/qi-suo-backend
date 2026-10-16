@@ -11,10 +11,14 @@ import com.cyj.dvo.HotProductDVO;
 import com.cyj.dvo.QueryProductDVO;
 import com.cyj.service.MerchantProductQueryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * 商品读接口的提供方：用户端浏览与管理端查询都通过服务间调用走这里
+ *
+ * 前三个接口已加入 SecurityConfig 白名单（游客可浏览），所以这里不加 @PreAuthorize；
+ * queryProductList 是管理台的商品审核列表，必须留在鉴权后面。
  */
 @RestController
 @RequestMapping("/api/merchant/product/")
@@ -24,7 +28,7 @@ public class MerchantProductQueryController {
     private MerchantProductQueryService merchantProductQueryService;
 
     /**
-     * 主页热门商品查询
+     * 主页热门商品查询（游客可访问）
      */
     @GetMapping("/queryHotProduct")
     public Result<PageResult<HotProductDVO>> queryHotProduct(Integer pageNum, Integer pageSize){
@@ -32,7 +36,7 @@ public class MerchantProductQueryController {
     }
 
     /**
-     * 商品详情查询
+     * 商品详情查询（游客可访问）
      */
     @GetMapping("/queryProductDetail")
     public Result<BackgroundGetProductDetailDVO> queryProductDetail(Integer id){
@@ -40,7 +44,7 @@ public class MerchantProductQueryController {
     }
 
     /**
-     * 条件查询商品
+     * 条件查询商品（游客可访问）
      */
     @PostMapping("/queryProductByCondition")
     public Result<PageResult<QueryProductDVO>> queryProductByCondition(@RequestBody QueryProductByConditionDTO queryProductByConditionDTO){
@@ -50,6 +54,7 @@ public class MerchantProductQueryController {
     /**
      * 后台商品列表查询（不按商家归属过滤，供管理服务使用）
      */
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','system')")
     @PostMapping("/queryProductList")
     public Result<PageResult<BackgroundGetProductDVO>> queryProductList(@RequestBody BackgroundGetProductByConditionDTO backgroundGetProductByConditionDTO){
         return merchantProductQueryService.queryProductList(backgroundGetProductByConditionDTO);

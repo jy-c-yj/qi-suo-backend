@@ -4,12 +4,15 @@ package com.cyj.config;
 
 import com.cyj.common.WhitelistURL;
 import com.cyj.filter.AuthFilter;
+import com.cyj.handler.RestAccessDeniedHandler;
+import com.cyj.handler.RestAuthEntryPoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -28,10 +31,17 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity   // 开启 @PreAuthorize：没有它，各 Controller 上的权限注解一律不生效
 public class SecurityConfig {
 
     @Autowired
     private AuthFilter authFilter;
+
+    @Autowired
+    private RestAuthEntryPoint restAuthEntryPoint;
+
+    @Autowired
+    private RestAccessDeniedHandler restAccessDeniedHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -86,10 +96,25 @@ public class SecurityConfig {
                                 WhitelistURL.Refresh_Token_Url,
                                 WhitelistURL.File_Upload_Url,
                                 WhitelistURL.User_Register_Url,
-                                WhitelistURL.home_getBackGroundImage_Url
+                                WhitelistURL.Merchant_Register_Url,
+                                WhitelistURL.Auth_Health_Url,
+                                WhitelistURL.File_Health_Url,
+                                WhitelistURL.home_getBackGroundImage_Url,
+                                // 首页与商品浏览放开给游客
+                                WhitelistURL.User_Home_Category_Url,
+                                WhitelistURL.User_Home_Carousel_Url,
+                                WhitelistURL.User_Product_Browse_Url,
+                                WhitelistURL.Merchant_Product_Hot_Url,
+                                WhitelistURL.Merchant_Product_Detail_Url,
+                                WhitelistURL.Merchant_Product_Cond_Url
                                 ).permitAll() // 放行api
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
                         .anyRequest().authenticated()
+                )
+                // 401 / 403 都吐统一 Result JSON，不再返回 HTML 错误页
+                .exceptionHandling((ex) -> ex
+                        .authenticationEntryPoint(restAuthEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler)
                 );
         httpSecurity.addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
         //httpSecurity.cors(config -> config.configurationSource(corsConfigurationSource()));

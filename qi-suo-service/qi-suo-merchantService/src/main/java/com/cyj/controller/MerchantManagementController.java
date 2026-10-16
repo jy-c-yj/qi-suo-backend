@@ -6,6 +6,7 @@ import com.cyj.dto.AdminMerchantListSelectConditionDTO;
 import com.cyj.dvo.AdminMerchantManagementLDVO;
 import com.cyj.service.MerchantManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -20,6 +21,7 @@ public class MerchantManagementController {
     /**
      * 条件查询商家列表
      */
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','system')")
     @PostMapping("/list")
     public Result<PageResult<AdminMerchantManagementLDVO>> list(@RequestBody AdminMerchantListSelectConditionDTO adminMerchantListSelectConditionDTO) {
         return merchantManagementService.list(adminMerchantListSelectConditionDTO);
@@ -28,6 +30,7 @@ public class MerchantManagementController {
     /**
      * 设置商家状态
      */
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','system')")
     @PutMapping("/status")
     public Result<String> setStatus(@RequestParam Long id,@RequestParam Integer pageNum) {
         return merchantManagementService.setStatus(id,pageNum);
@@ -36,6 +39,7 @@ public class MerchantManagementController {
     /**
      * 按商家id取商家名
      */
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','user','system')")
     @GetMapping("/getMerchantNameById")
     public Result<String> getMerchantNameById(@RequestParam Long id) {
         return merchantManagementService.getMerchantNameById(id);

@@ -8,6 +8,7 @@ import com.cyj.dvo.BackgroundGetProductDVO;
 import com.cyj.dvo.BackgroundGetProductDetailDVO;
 import com.cyj.service.AdminProductQueryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,6 +23,7 @@ public class AdminProductManagementController {
      * @param backgroundGetProductByConditionDTO
      * @return
      */
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','system')")
     @PostMapping("/getProduct")
     public Result<PageResult<BackgroundGetProductDVO>> getProduct(@RequestBody BackgroundGetProductByConditionDTO backgroundGetProductByConditionDTO) {
         return productManagementService.getProduct(backgroundGetProductByConditionDTO);
@@ -32,9 +34,10 @@ public class AdminProductManagementController {
      * @param id
      * @return
      */
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','system')")
     @GetMapping("/getProductDetail/{id}")
     public Result<BackgroundGetProductDetailDVO> getProductDetail(@PathVariable(value = "id") Integer id) {
         return productManagementService.getProductDetail(id);
     }
-    
+
 }

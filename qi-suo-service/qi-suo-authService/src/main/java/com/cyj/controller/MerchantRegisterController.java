@@ -1,6 +1,7 @@
 package com.cyj.controller;
 
 
+import com.cyj.Annotation.Log;
 import com.cyj.common.Result;
 import com.cyj.dto.MerchantRegisterDTO;
 import com.cyj.service.MerchantRegisterService;
@@ -17,6 +18,7 @@ public class MerchantRegisterController {
     @Autowired
     private MerchantRegisterService merchantRegisterService;
 
+    @Log(module = "认证", desc = "商家注册")
     @PostMapping("/register")
     public Result<String> register(@RequestBody MerchantRegisterDTO merchantRegisterDTO) {
         return merchantRegisterService.register(merchantRegisterDTO);

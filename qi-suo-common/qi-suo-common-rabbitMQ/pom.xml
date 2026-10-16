@@ -16,13 +16,10 @@
     </properties>
 
     <dependencies>
-        <!--
-          RabbitMQConfig 里的 ExchangeBuilder / QueueBuilder / Jackson2JsonMessageConverter
-          全部来自 spring-amqp / spring-rabbit，缺了本模块自身就编译不过。
-        -->
+
         <dependency>
-            <groupId>org.springframework.amqp</groupId>
-            <artifactId>spring-rabbit</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
         <dependency>

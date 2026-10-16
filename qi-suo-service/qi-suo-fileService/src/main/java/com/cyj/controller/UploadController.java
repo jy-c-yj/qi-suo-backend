@@ -1,6 +1,7 @@
 package com.cyj.controller;
 
 
+import com.cyj.Annotation.Log;
 import com.cyj.common.Result;
 import com.cyj.config.MinioConfig;
 import com.cyj.exception.FileUploadException;
@@ -26,6 +27,8 @@ public class UploadController {
 
 
 
+    // 上传接口在白名单里（匿名可用，如登录前换头像），所以只标注日志不做鉴权
+    @Log(module = "文件", desc = "上传文件")
     @PostMapping("/upload")
     public Result<String> upload(@RequestParam MultipartFile file) throws Exception {
 

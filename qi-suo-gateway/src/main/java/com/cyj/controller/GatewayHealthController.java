@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class GatewayHealthController {
     @RequestMapping("/health")
-//    @PreAuthorize("hasAnyRole('user')")
     public String health() {
         return "gatewayService is ok";
     }

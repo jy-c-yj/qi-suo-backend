@@ -1,6 +1,7 @@
 package com.cyj.controller;
 
 
+import com.cyj.Annotation.Log;
 import com.cyj.common.Result;
 import com.cyj.utils.JwtUtil;
 import com.cyj.utils.RedissonUtil;
@@ -17,6 +18,7 @@ public class JwtController {
     private JwtUtil jwtUtil;
     @Autowired
     private RedissonUtil redissonUtil;
+    @Log(module = "认证", desc = "刷新令牌")
     @GetMapping("/refresh")
     public Result<String> refresh(String refresh_token_key) {
         //从redis查询刷新令牌

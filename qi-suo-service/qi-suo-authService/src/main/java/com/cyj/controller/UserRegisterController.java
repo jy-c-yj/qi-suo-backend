@@ -1,6 +1,7 @@
 package com.cyj.controller;
 
 
+import com.cyj.Annotation.Log;
 import com.cyj.common.Result;
 import com.cyj.dto.UserRegisterDTO;
 import com.cyj.service.UserRegisterService;
@@ -17,6 +18,7 @@ public class UserRegisterController {
     @Autowired
     private UserRegisterService userRegisterService;
 
+    @Log(module = "认证", desc = "用户注册")
     @PostMapping("/register")
     public Result<String> register(@RequestBody UserRegisterDTO userRegisterDTO) {
         return userRegisterService.register(userRegisterDTO);

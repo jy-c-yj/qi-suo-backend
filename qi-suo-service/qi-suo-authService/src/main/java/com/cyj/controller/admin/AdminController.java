@@ -1,6 +1,7 @@
 package com.cyj.controller.admin;
 
 
+import com.cyj.Annotation.Log;
 import com.cyj.common.Result;
 import com.cyj.dto.AdminLoginDTO;
 import com.cyj.dto.UserLoginDTO;
@@ -24,6 +25,7 @@ public class AdminController {
     @Autowired
     AdminService adminService;
 
+    @Log(module = "认证", desc = "管理员登录")
     @PostMapping("/login")
     public Result<AccessTokenDVO> login(@RequestBody AdminLoginDTO adminLoginDTO) {
 

@@ -33,20 +33,21 @@ public class LogConsumerConfig {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
 
+        //单线程
         factory.setConcurrentConsumers(concurrency);
-
+        //批量监听，方法签名接收List
         factory.setBatchListener(true);
-
+        //批量拉取，一次从容器拉多条
         factory.setConsumerBatchEnabled(true);
-
+        //一批最多多少
         factory.setBatchSize(batchSize);
-
+        //从第一条起最多等多久交付，避免低流量长时间为ack
         factory.setBatchReceiveTimeout((long) batchReceiveTimeoutMs);
 
         factory.setPrefetchCount(prefetch);
-
+        //开启手动ack、nck，以便逐条确认
         factory.setAcknowledgeMode(AcknowledgeMode.MANUAL);
-
+        //异常消息走死信
         factory.setDefaultRequeueRejected(false);
         return factory;
     }

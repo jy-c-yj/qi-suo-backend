@@ -6,6 +6,7 @@ import com.cyj.dto.AdminUserListSelectConditionDTO;
 import com.cyj.dvo.AdminUserManagementLDVO;
 import com.cyj.service.UserManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -20,6 +21,7 @@ public class UserManagementController {
     /**
      * 获取用户列表
      */
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','system')")
     @PostMapping("/list")
     public Result<PageResult<AdminUserManagementLDVO>> list(@RequestBody AdminUserListSelectConditionDTO adminUserListSelectConditionDTO) {
 
@@ -29,6 +31,7 @@ public class UserManagementController {
     /**
      * 用户账号状态设置
      */
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','system')")
     @PutMapping("/status")
     public Result<String> status(@RequestParam Long id, @RequestParam Integer pageNum) {
         return userManagementService.setStatus(id,pageNum);

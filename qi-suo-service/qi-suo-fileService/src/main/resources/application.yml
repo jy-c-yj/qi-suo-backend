@@ -7,6 +7,7 @@ spring:
       - minio
       - mybatis
       - feign
+      - mq
   application:
     name: qi-suo-file
   cloud:

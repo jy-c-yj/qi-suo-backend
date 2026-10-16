@@ -152,7 +152,7 @@ public class RequestLogConsumer {
 
     private static boolean basicAck(Channel channel, long tag) {
         try {
-            channel.basicAck(tag, true);      // multiple=true：批量模式下这批的 tag 连续，一次覆盖
+            channel.basicAck(tag, true);      // multiple=true：批量模式下这批的 tag 连续，整批结算
             return true;
         } catch (IOException e) {
             log.error("basicAck 失败, tag={}", tag, e);

@@ -1,11 +1,13 @@
 package com.cyj.controller;
 
+import com.cyj.Annotation.Log;
 import com.cyj.common.PageResult;
 import com.cyj.common.Result;
 import com.cyj.dto.AdminUserListSelectConditionDTO;
 import com.cyj.dvo.AdminUserManagementLDVO;
 import com.cyj.service.AdminUserManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -23,6 +25,7 @@ public class UserManagementController {
      * @param adminUserListSelectConditionDTO
      * @return
      */
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','system')")
     @PostMapping("/list")
     public Result<PageResult<AdminUserManagementLDVO>> list(@RequestBody AdminUserListSelectConditionDTO adminUserListSelectConditionDTO) {
 
@@ -31,6 +34,8 @@ public class UserManagementController {
     /**
      * 用户账号状态设置
      */
+    @Log(module = "用户管理", desc = "启用或禁用用户")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','system')")
     @PutMapping("/status")
     public Result<String> status(@RequestParam Long id, @RequestParam Integer pageNum) {
         return userManagementService.status(id,pageNum);

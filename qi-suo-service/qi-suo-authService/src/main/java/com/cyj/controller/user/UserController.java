@@ -1,6 +1,7 @@
 package com.cyj.controller.user;
 
 
+import com.cyj.Annotation.Log;
 import com.cyj.common.Result;
 
 import com.cyj.dto.UserLoginDTO;
@@ -21,6 +22,7 @@ public class UserController {
     @Autowired
     UserService userService;
 
+    @Log(module = "认证", desc = "用户登录")
     @PostMapping("/login")
     public Result<AccessTokenDVO> login(@RequestBody UserLoginDTO userLoginDTO) {
 

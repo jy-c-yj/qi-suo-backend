@@ -2,7 +2,7 @@ spring:
   rabbitmq:
     host: 127.0.0.1
     port: 5672
-    virtual-host: cyj
+    virtual-host: qi-suo
     username: cyj
     password: 12345
     #生产者配置

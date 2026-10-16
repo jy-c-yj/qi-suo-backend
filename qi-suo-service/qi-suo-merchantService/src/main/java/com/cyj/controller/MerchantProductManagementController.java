@@ -1,6 +1,7 @@
 package com.cyj.controller;
 
 
+import com.cyj.Annotation.Log;
 import com.cyj.common.PageResult;
 import com.cyj.common.Result;
 import com.cyj.dto.*;
@@ -9,6 +10,7 @@ import com.cyj.dvo.BackgroundGetProductDetailDVO;
 import com.cyj.service.MerchantProductManagementService;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,16 +25,18 @@ public class MerchantProductManagementController {
      * @param backgroundGetProductByConditionDTO
      * @return
      */
+    @PreAuthorize("hasAuthority('Merchant')")
     @PostMapping("/getProduct")
     public Result<PageResult<BackgroundGetProductDVO>> getProduct(@RequestBody BackgroundGetProductByConditionDTO backgroundGetProductByConditionDTO) {
         return productManagementService.getProduct(backgroundGetProductByConditionDTO);
     }
 
     /**
-     * 获取商品详情
+     * 获取商品详情（商家端用，同时也被管理服务经服务间调用）
      * @param id
      * @return
      */
+    @PreAuthorize("hasAnyAuthority('Merchant','SystemADMIN','SuperAdmin','system')")
     @GetMapping("/getProductDetail/{id}")
     public Result<BackgroundGetProductDetailDVO> getProductDetail(@PathVariable(value = "id") Integer id) {
         return productManagementService.getProductDetail(id);
@@ -43,6 +47,8 @@ public class MerchantProductManagementController {
      * @param merchantUpdateProductFormDTO
      * @return
      */
+    @Log(module = "商品", desc = "修改商品")
+    @PreAuthorize("hasAuthority('Merchant')")
     @PostMapping("/updateProduct")
     public Result<String> updateProduct(@RequestBody MerchantUpdateProductFormDTO merchantUpdateProductFormDTO) {
         return productManagementService.updateProduct(merchantUpdateProductFormDTO);
@@ -51,6 +57,8 @@ public class MerchantProductManagementController {
     /**
      * 新增商品
      */
+    @Log(module = "商品", desc = "新增商品")
+    @PreAuthorize("hasAuthority('Merchant')")
     @PostMapping("/newProduct")
     public Result<String> newProduct(@RequestBody NewProductDTO newProductDTO) {
         return productManagementService.newProduct(newProductDTO);
@@ -59,6 +67,8 @@ public class MerchantProductManagementController {
     /**
      * 分类新增
      */
+    @Log(module = "商品", desc = "新增商品分类")
+    @PreAuthorize("hasAuthority('Merchant')")
     @PostMapping("/newProductCategory")
     public Result<String> newProductCategory(@RequestBody NewProductCategoryDTO newProductCategoryDTO) {
         return productManagementService.newProductCategory(newProductCategoryDTO);
@@ -66,6 +76,8 @@ public class MerchantProductManagementController {
     /**
      * 分类删除
      */
+    @Log(module = "商品", desc = "删除商品分类")
+    @PreAuthorize("hasAuthority('Merchant')")
     @PostMapping("/deleteProductCategory")
     public Result<String> deleteProductCategory(@RequestBody DeleteProductCategoryDTO deleteProductCategoryDTO) {
         return productManagementService.deleteProductCategory(deleteProductCategoryDTO);
@@ -73,6 +85,8 @@ public class MerchantProductManagementController {
     /**
      * 属性新增
      */
+    @Log(module = "商品", desc = "新增商品属性值")
+    @PreAuthorize("hasAuthority('Merchant')")
     @PostMapping("/newProductAttributeValue")
     public Result<String> newProductAttributeValue(@RequestBody NewProductAttributeValueDTO newProductAttributeValueDTO) {
         return productManagementService.newProductAttributeValue(newProductAttributeValueDTO);
@@ -81,6 +95,8 @@ public class MerchantProductManagementController {
     /**
      * 属性删除
      */
+    @Log(module = "商品", desc = "删除商品属性值")
+    @PreAuthorize("hasAuthority('Merchant')")
     @PostMapping("/deleteProductAttributeValue")
     public Result<String> deleteProductAttributeValue(@RequestBody DeleteProductAttributeValueDTO deleteProductAttributeValueDTO) {
         return productManagementService.deleteProductAttributeValue(deleteProductAttributeValueDTO);
@@ -88,6 +104,8 @@ public class MerchantProductManagementController {
     /**
      * 商品上架|下架
      */
+    @Log(module = "商品", desc = "上下架商品")
+    @PreAuthorize("hasAuthority('Merchant')")
     @PutMapping("/setStatus")
     public Result<String> setStatus(Integer productId) {
         return productManagementService.setStatus(productId);
@@ -95,6 +113,8 @@ public class MerchantProductManagementController {
     /**
      * 商品删除
      */
+    @Log(module = "商品", desc = "删除商品")
+    @PreAuthorize("hasAuthority('Merchant')")
     @DeleteMapping("/deleteProduct")
     public Result<String> deleteProduct(Integer productId) {
         return productManagementService.deleteProduct(productId);

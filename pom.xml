@@ -42,7 +42,6 @@
         <mysql-jdbc>8.0.31</mysql-jdbc>
         <druid>1.2.20</druid>
         <kaptcha>2.3.2</kaptcha>
-        <rabbit>3.2.8</rabbit>
     </properties>
 
     <dependencyManagement>
@@ -146,12 +145,14 @@
 
 
 
-            <!-- MQ -->
-            <dependency>
-                <groupId>org.springframework.amqp</groupId>
-                <artifactId>spring-rabbit</artifactId>
-                <version>${rabbit}</version>
-            </dependency>
+            <!--
+              MQ：不要在这里单独钉 spring-rabbit 的版本。
+              Spring AMQP 的 spring-rabbit 与 spring-amqp 必须同版本：3.2.x 的
+              DefaultMessagePropertiesConverter 会调 MessageProperties.getRetryCount()，
+              而该方法在 3.1.x 的 spring-amqp 里不存在。之前这里把 spring-rabbit 钉到 3.2.8、
+              却没钉 spring-amqp（跟着 Spring Boot BOM 走 3.1.7），两者劈叉，
+              消费者线程一收消息就 NoSuchMethodError。交给 Spring Boot 的 BOM 统一管理最稳。
+            -->
             <!-- 定时任务 -->
 
             <!-- 日志 -->

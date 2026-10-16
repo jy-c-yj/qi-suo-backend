@@ -1,5 +1,6 @@
 package com.cyj.controller.merchant;
 
+import com.cyj.Annotation.Log;
 import com.cyj.common.Result;
 import com.cyj.dto.MerchantLoginDTO;
 import com.cyj.dto.UserLoginDTO;
@@ -20,6 +21,7 @@ public class MerchantController {
     @Autowired
     MerchantService merchantService;
 
+    @Log(module = "认证", desc = "商家登录")
     @PostMapping("/login")
     public Result<AccessTokenDVO> login(@RequestBody MerchantLoginDTO merchantLoginDTO) {
 
