@@ -22,21 +22,21 @@ public class UserCartController {
 
     //添加购物车
     @Log(module = "购物车", desc = "加入购物车")
-    @PreAuthorize("hasAuthority('user')")
+    @PreAuthorize("hasAuthority('USER')")
     @PostMapping("/add")
     public Result<String> addCartItem(@RequestParam Long productId, @RequestParam Integer quantity){
         return userCartService.addCartItem(productId,quantity);
     }
     //删除购物车
     @Log(module = "购物车", desc = "删除购物车商品")
-    @PreAuthorize("hasAuthority('user')")
+    @PreAuthorize("hasAuthority('USER')")
     @DeleteMapping("/delete/{productId}")
     public Result<String> deleteCartItem(@PathVariable Long productId){
         return userCartService.deleteCartItem(productId);
     }
 
     //查看购物车
-    @PreAuthorize("hasAuthority('user')")
+    @PreAuthorize("hasAuthority('USER')")
     @GetMapping("/list")
     public Result<List<CartDVO>> getCartList(@RequestParam Long merchantId){
         return userCartService.getCartList(merchantId);
@@ -44,7 +44,7 @@ public class UserCartController {
 
     //购物车结算生成订单
     @Log(module = "订单", desc = "创建订单")
-    @PreAuthorize("hasAuthority('user')")
+    @PreAuthorize("hasAuthority('USER')")
     @PostMapping("/createOrder")
     public Result<UserOrdersDetailDVO> createOrder(@RequestBody CreateOrderDTO createOrderDTO){
         return userCartService.createOrder(createOrderDTO);

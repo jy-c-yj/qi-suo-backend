@@ -19,9 +19,9 @@ spring:
 qi-suo:
   log:
     consumer-enabled: true
-    batch-size: 100               # 攒多少条
+    batch-size: 10             # 攒多少条
     batch-receive-timeout-ms: 1000
-    prefetch: 100
+    prefetch: 10
 
 
 

@@ -39,7 +39,7 @@ public class MerchantManagementController {
     /**
      * 按商家id取商家名
      */
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','user','system')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','USER','system')")
     @GetMapping("/getMerchantNameById")
     public Result<String> getMerchantNameById(@RequestParam Long id) {
         return merchantManagementService.getMerchantNameById(id);

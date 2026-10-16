@@ -25,7 +25,7 @@ public class CategoryManagementController {
      * 分页查询所有分类
      * @return
      */
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system','USER')")
     @GetMapping("/getCategory")
     public Result<PageResult<AdminGetCategoryDVO>> getCategory(int pageNum, int pageSize) {
             return categoryManagementService.getCategory(pageNum, pageSize);
@@ -33,7 +33,7 @@ public class CategoryManagementController {
     /**
      * 条件查询
      */
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system','USER')")
     @PostMapping("/getCategoryByCondition")
     public Result<PageResult<AdminGetCategoryDVO>> getCategoryByCondition(@RequestBody AdminGetCategoryByConditionDTO adminGetCategoryByConditionDTO) {
             return categoryManagementService.getCategoryByCondition(adminGetCategoryByConditionDTO);

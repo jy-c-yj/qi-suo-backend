@@ -142,6 +142,7 @@ public class logAop {
             // 返回 void / PageResult / DTO：无法判断，没抛异常就算成功
             operLog.setBizCode(1);
         }
+        operLog.setErrorMsg("null msg");
         operLog.setSuccess(operLog.getBizCode() == 1);
     }
 

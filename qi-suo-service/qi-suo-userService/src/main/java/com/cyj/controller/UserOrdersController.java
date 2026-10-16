@@ -25,14 +25,14 @@ public class UserOrdersController {
     private UserOrdersService userOrdersService;
 
     //查询所有订单列表
-    @PreAuthorize("hasAuthority('user')")
+    @PreAuthorize("hasAuthority('USER')")
     @GetMapping("/list")
     public Result<List<UserOrdersDVO>> list() {
         return userOrdersService.list();
     }
 
     //查询订单详情（用户端用，同时也被商家服务经服务间调用）
-    @PreAuthorize("hasAnyAuthority('user','system')")
+    @PreAuthorize("hasAnyAuthority('USER','system')")
     @GetMapping("/detail")
     public Result<UserOrdersDetailDVO> detail(@RequestParam Long orderId) {
         return userOrdersService.detail(orderId);
@@ -40,7 +40,7 @@ public class UserOrdersController {
 
     //支付订单
     @Log(module = "订单", desc = "支付订单")
-    @PreAuthorize("hasAuthority('user')")
+    @PreAuthorize("hasAuthority('USER')")
     @GetMapping("/pay")
     public Result<String> pay(@RequestParam Long orderId) {
         return userOrdersService.pay(orderId);
@@ -48,7 +48,7 @@ public class UserOrdersController {
 
     //确认订单完成
     @Log(module = "订单", desc = "确认收货")
-    @PreAuthorize("hasAuthority('user')")
+    @PreAuthorize("hasAuthority('USER')")
     @GetMapping("/confirm")
     public Result<String> confirm(@RequestParam Long orderId) {
         return userOrdersService.confirm(orderId);

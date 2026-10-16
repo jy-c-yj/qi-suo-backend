@@ -17,11 +17,7 @@ spring:
 # 订单超时未支付自动取消
 qi-suo:
   order:
-    # 超时时长。注意：它是延迟队列的声明参数 x-message-ttl，
-    # 队列已存在时改这里重启【不会生效】，只会报 PRECONDITION_FAILED。
-    # 改超时值的流程：停 userService → 删 qi-suo.order.delay.queue（队列里的消息一并丢）→ 改这里 → 重启，
-    # 丢掉的订单由扫描任务兜底。
-    timeout: 15m
+    timeout:
     # 延迟消息消费者开关（排障时可关掉，只留扫描）
     timeout-consumer-enabled: true
     # 兜底扫描开关
