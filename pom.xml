@@ -21,7 +21,6 @@
         <module>qi-suo-sys</module>
         <module>qi-suo-service</module>
         <module>qi-suo-pojo</module>
-        <module>qi-suo-test</module>
         <module>qi-suo-gateway</module>
     </modules>
 
