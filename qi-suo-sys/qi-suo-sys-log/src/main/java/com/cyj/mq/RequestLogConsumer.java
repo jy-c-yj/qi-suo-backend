@@ -34,8 +34,6 @@ public class RequestLogConsumer {
     private static final long INITIAL_BACKOFF_MS = 200;
 
     private final SysOperLogMapper mapper;
-
-
     private final MessageConverter messageConverter;
 
 

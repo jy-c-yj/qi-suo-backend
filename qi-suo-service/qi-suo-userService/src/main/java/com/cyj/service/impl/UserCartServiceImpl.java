@@ -1,17 +1,23 @@
 package com.cyj.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.cyj.common.OrderStatus;
+import com.cyj.common.OrderStockState;
 import com.cyj.common.OrdersProductShow;
 import com.cyj.common.Result;
 import com.cyj.constant.RedissonKey;
 import com.cyj.dto.CreateOrderDTO;
+import com.cyj.dto.ProductStockDTO;
+import com.cyj.dto.ProductStockItemDTO;
 import com.cyj.dvo.CartDVO;
 import com.cyj.dvo.UserOrdersDetailDVO;
 import com.cyj.entity.*;
 import com.cyj.exception.ProductIsNotExistException;
 import com.cyj.exception.ProductStockIsNotException;
 import com.cyj.feign.merchant.MerchantManagementFeignClient;
+import com.cyj.feign.merchant.MerchantProductStockFeignClient;
 import com.cyj.mapper.*;
+import com.cyj.mq.OrderTimeoutPublisher;
 import com.cyj.service.UserCartService;
 import com.cyj.utils.RedissonUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +25,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -42,9 +51,13 @@ public class UserCartServiceImpl implements UserCartService {
     @Autowired
     private MerchantManagementFeignClient merchantManagementFeignClient;
     @Autowired
+    private MerchantProductStockFeignClient productStockFeignClient;
+    @Autowired
     private OrderItemMapper orderItemMapper;
     @Autowired
     private RedissonUtil redissonUtil;
+    @Autowired
+    private OrderTimeoutPublisher orderTimeoutPublisher;
     /**
      * 添加购物车项的方法
      *
@@ -52,7 +65,8 @@ public class UserCartServiceImpl implements UserCartService {
      * @param quantity   商品数量，表示要添加的商品数量
      */
     @Override
-    public Result<String> addCartItem(Long productId,  Integer quantity) {
+    public Result<String>
+    addCartItem(Long productId,  Integer quantity) {
 
         Long userid = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         log.info("当前用户ID：{}, 添加购物车项，商品ID：{}，数量：{}",userid, productId, quantity);
@@ -137,10 +151,7 @@ public class UserCartServiceImpl implements UserCartService {
             int i = 0;
             for(Cart cart : cartList){
                 if(Objects.equals(cart.getProductId(), productId)){
-                    //恢复商品库存
-
-                    product.setStock(product.getStock() + 1);
-                    productMapper.updateById(product);
+                    //购物车从不持有库存（下单时才扣减），删购物车项不涉及库存
                     //修改缓存
                     cart.setQuantity(cart.getQuantity() - 1);
                     if(cart.getQuantity() <= 0){
@@ -200,6 +211,15 @@ public class UserCartServiceImpl implements UserCartService {
         }
         //获取地址
         Long addressId = createOrderDTO.getUserAddressId();
+        UserAddress userAddress = addressId == null ? null : userAddressMapper.selectById(addressId);
+        if(userAddress == null){
+            return Result.error("收货地址不存在");
+        }
+        //获取商家名（商家信息由商家服务提供）
+        Result<String> merchantNameResult = merchantManagementFeignClient.getMerchantNameById(sellerId);
+        if(merchantNameResult == null || !Integer.valueOf(1).equals(merchantNameResult.getCode())){
+            return Result.error("获取商家信息失败");
+        }
         //创建订单号
         String orderNo = UUID.randomUUID().toString().replace("-", "");
         //计算总价
@@ -211,7 +231,8 @@ public class UserCartServiceImpl implements UserCartService {
 
         //生成订单
         Orders orders =  new Orders();
-        orders.setStatus("待支付");
+        orders.setStatus(OrderStatus.UNPAID);
+        orders.setStockState(OrderStockState.RESERVED); //已占用库存
         orders.setUserId(userid);
         orders.setMerchantId(sellerId);
         orders.setOrderNo(orderNo);
@@ -219,7 +240,8 @@ public class UserCartServiceImpl implements UserCartService {
         orders.setTotalAmount(totalPrice);
         ordersMapper.insert(orders);
 
-        //生成订单项
+        //生成订单项，顺便收集扣减库存的入参
+        List<ProductStockItemDTO> stockItems = new ArrayList<>();
         for(Cart cart : cartList){
             OrderItem orderItem = new OrderItem();
             orderItem.setTotalPrice(cart.getTotalPrice());
@@ -229,22 +251,32 @@ public class UserCartServiceImpl implements UserCartService {
             orderItem.setProductId(cart.getProductId());
             //插入数据库
             orderItemMapper.insert(orderItem);
+            stockItems.add(new ProductStockItemDTO(cart.getProductId(), cart.getQuantity()));
         }
+
+        //扣减库存
+        Result<String> deductResult;
+        try {
+            deductResult = productStockFeignClient.deductStock(new ProductStockDTO(orders.getId(), stockItems));
+        }catch (Exception e){
+            log.error("扣减库存调用异常, orderId={}", orders.getId(), e);
+            deductResult = null;
+        }
+        if(deductResult == null || !Integer.valueOf(1).equals(deductResult.getCode())){
+            String message = deductResult == null ? "扣减库存失败，请稍后重试" : deductResult.getMsg();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return Result.error(message);
+        }
+
+        //扣减确认成功之后才注册补偿钩子：提交成功永不触发；回滚说明订单没落库，这笔占用必须还回去
+        registerStockRestoreOnRollback(orders.getId(), stockItems);
 
         //生成返回数据（订单详情）
         userOrdersDetailDVO.setCreatedAt(orders.getCreatedAt());
         userOrdersDetailDVO.setOrderNo(orders.getOrderNo());
         userOrdersDetailDVO.setTotalAmount(orders.getTotalAmount());
-        //获取地址详情
-        UserAddress userAddress = userAddressMapper.selectById(addressId);
         userOrdersDetailDVO.setDetailAddress(userAddress.getDetailAddress());
         userOrdersDetailDVO.setUserAddressId(userAddress.getId());
-        //获取商家名（商家信息由商家服务提供）
-        Result<String> merchantNameResult = merchantManagementFeignClient.getMerchantNameById(sellerId);
-        if(merchantNameResult.getCode() == 0){
-            //与原先查不到商家时一致：抛异常让订单事务回滚
-            throw new RuntimeException("获取商家信息失败");
-        }
         userOrdersDetailDVO.setMerchantName(merchantNameResult.getData());
         userOrdersDetailDVO.setStatus(orders.getStatus());
         userOrdersDetailDVO.setMerchantId(sellerId);
@@ -263,12 +295,45 @@ public class UserCartServiceImpl implements UserCartService {
         }
         userOrdersDetailDVO.setProductList(productList);
 
-        //清空购物车
-        //清空缓存
-        redissonUtil.delete(cartKey);
-        //清空数据库
-
+        //事务结束后清空购物车缓存 、投递超时延迟消息
+        orderTimeoutPublisher.afterCommit(() -> {
+            try {
+                redissonUtil.delete(cartKey);
+            }catch (Exception e){
+                log.error("下单成功后清理购物车缓存失败, cartKey={}", cartKey, e);
+            }
+            orderTimeoutPublisher.publish(orders.getId(), orders.getOrderNo());
+        });
 
        return Result.success(userOrdersDetailDVO);
+    }
+
+    /**
+     * 注册「事务回滚则归还库存」的补偿钩子——扣减成功之后才调用。
+     */
+    private void registerStockRestoreOnRollback(Long orderId, List<ProductStockItemDTO> stockItems) {
+        if(!TransactionSynchronizationManager.isSynchronizationActive()){
+            //当前线程没有事务，无法注册回调，直接返回
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                //提交成功，订单入库，直接退出
+                if(status != TransactionSynchronization.STATUS_ROLLED_BACK){
+                    return;
+                }
+                try {
+                    Result<String> result = productStockFeignClient.restoreStock(new ProductStockDTO(orderId, stockItems));
+                    if(result == null || !Integer.valueOf(1).equals(result.getCode())){
+                        log.error("下单回滚后归还库存失败, orderId={}, resp={}，需人工核对商品库存", orderId, result);
+                    }else {
+                        log.info("下单回滚，已归还库存, orderId={}", orderId);
+                    }
+                }catch (Exception e){
+                    log.error("下单回滚后归还库存异常, orderId={}，需人工核对商品库存", orderId, e);
+                }
+            }
+        });
     }
 }

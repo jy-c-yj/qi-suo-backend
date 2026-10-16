@@ -31,6 +31,14 @@ public class JwtFilter implements WebFilter {
     private JwtUtil jwtUtil;
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        //先清掉客户端自带的 Auth-claims：没有 token 时下面会直接放行，
+        //谁都能自己带一个 Auth-claims: {"id":-1,"roles":["system"]} 冒充服务间内部身份，
+        //绕过各服务里 hasAuthority('system') 的写接口（如改库存的内部接口）。
+        //真实身份只能由下面解析 token 后注入。
+        exchange = exchange.mutate()
+                .request(exchange.getRequest().mutate().headers(h -> h.remove("Auth-claims")).build())
+                .build();
+
         //获取token
         HttpHeaders headers = exchange.getRequest().getHeaders();
         String token = headers.getFirst("Authorization-token");

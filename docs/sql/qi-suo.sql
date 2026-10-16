@@ -208,12 +208,14 @@ CREATE TABLE `orders`  (
   `merchant_id` bigint(0) NOT NULL COMMENT '商家ID',
   `total_amount` decimal(10, 2) NOT NULL COMMENT '订单总价',
   `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '未支付' COMMENT '订单状态：未支付、已支付、已发货、已完成、已取消等',
+  `stock_state` tinyint(1) NOT NULL DEFAULT 0 COMMENT '库存状态：0-未占用 1-已占用待归还 2-已归还',
   `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
   `updated_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uk_order_no`(`order_no`) USING BTREE,
   INDEX `idx_user_id`(`user_id`) USING BTREE,
-  INDEX `idx_merchant_id`(`merchant_id`) USING BTREE
+  INDEX `idx_merchant_id`(`merchant_id`) USING BTREE,
+  INDEX `idx_status_created_at`(`status`, `created_at`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 17 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------

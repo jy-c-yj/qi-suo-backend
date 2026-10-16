@@ -13,6 +13,7 @@ import com.cyj.entity.Merchant;
 import com.cyj.entity.Product;
 import com.cyj.entity.ProductAttributeValue;
 import com.cyj.entity.ProductCategory;
+import com.cyj.exception.ProductStockIsNotException;
 import com.cyj.mapper.*;
 import com.cyj.service.MerchantInformationManagementService;
 import com.cyj.service.MerchantProductManagementService;
@@ -364,5 +365,67 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
         redissonUtil.delete(key);
 
         return Result.success("删除成功");
+    }
+
+    /**
+     * 整单扣减库存。
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Result<String> deductStock(ProductStockDTO productStockDTO) {
+        Result<String> invalid = validateStockItems(productStockDTO);
+        if (invalid != null) {
+            return invalid;
+        }
+        //校验所有商品的可用库存。
+        for (ProductStockItemDTO item : productStockDTO.getItems()) {
+            Product product = productMapper.selectById(item.getProductId());
+            if (product == null) {
+                return Result.error("商品不存在：" + item.getProductId());
+            }
+            if (product.getStock() == null || product.getStock() < item.getQuantity()) {
+                return Result.error("商品库存不足：" + item.getProductId());
+            }
+        }
+        for (ProductStockItemDTO item : productStockDTO.getItems()) {
+            if (productMapper.deductStock(item.getProductId(), item.getQuantity()) != 1) {
+                //并发下被别人扣走了，同样整批回滚
+                throw new ProductStockIsNotException("商品库存不足：" + item.getProductId());
+            }
+            redissonUtil.delete(RedissonKey.PRODUCT_MANAGEMENT_DETAIL_KEY + item.getProductId());
+        }
+        log.info("订单 {} 扣减库存成功", productStockDTO.getOrderId());
+        return Result.success("扣减库存成功");
+    }
+
+    /**
+     * 整单归还库存（订单超时取消）。
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Result<String> restoreStock(ProductStockDTO productStockDTO) {
+        Result<String> invalid = validateStockItems(productStockDTO);
+        if (invalid != null) {
+            return invalid;
+        }
+        for (ProductStockItemDTO item : productStockDTO.getItems()) {
+            productMapper.restoreStock(item.getProductId(), item.getQuantity());
+            redissonUtil.delete(RedissonKey.PRODUCT_MANAGEMENT_DETAIL_KEY + item.getProductId());
+        }
+        log.info("订单 {} 归还库存成功", productStockDTO.getOrderId());
+        return Result.success("归还库存成功");
+    }
+
+    private Result<String> validateStockItems(ProductStockDTO productStockDTO) {
+        if (productStockDTO == null || productStockDTO.getItems() == null || productStockDTO.getItems().isEmpty()) {
+            return Result.error("库存变更参数为空");
+        }
+        for (ProductStockItemDTO item : productStockDTO.getItems()) {
+            if (item == null || item.getProductId() == null
+                    || item.getQuantity() == null || item.getQuantity() <= 0) {
+                return Result.error("库存变更参数非法");
+            }
+        }
+        return null;
     }
 }

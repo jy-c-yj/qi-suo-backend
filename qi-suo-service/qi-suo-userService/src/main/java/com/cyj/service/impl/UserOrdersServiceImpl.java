@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyj.common.OrdersProductShow;
+import com.cyj.common.OrderStatus;
 import com.cyj.common.PageResult;
 import com.cyj.common.Result;
 import com.cyj.dvo.MerchantOrdersDVO;
@@ -16,13 +17,13 @@ import com.cyj.mapper.*;
 import com.cyj.service.UserOrdersService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -101,35 +102,34 @@ public class UserOrdersServiceImpl implements UserOrdersService {
 
     @Override
     public Result<String> pay(Long orderId) {
-        //支付操作，默认成功
-        Boolean success = true;
-        //更改订单状态
-        try {
-            if (success) {
-                Orders orders = new Orders();
-                orders.setId(orderId);
-                orders.setStatus("已支付");
-                ordersMapper.updateById(orders);
-                return Result.success("支付成功");
-            }
-        } catch (Exception e) {
-            return Result.error("支付失败");
+        //先校验归属：原来不校验，任何人拿别人的 orderId 就能支付
+        Orders orders = ordersMapper.selectById(orderId);
+        if (orders == null || !Objects.equals(orders.getUserId(), currentUserId())) {
+            return Result.error("订单不存在");
         }
-        return Result.error("支付失败");
+        if (OrderStatus.CANCELLED.equals(orders.getStatus())) {
+            return Result.error("订单已取消，无法支付");
+        }
+        //CAS：只允许「未支付 -> 已支付」这一个迁移，同时与超时取消互斥（谁先拿到那一行谁赢）
+        int rows = ordersMapper.casStatus(orderId, OrderStatus.UNPAID, OrderStatus.PAID);
+        return rows == 1 ? Result.success("支付成功") : Result.error("订单状态已变更，无法支付");
     }
 
     @Override
     public Result<String> confirm(Long orderId) {
-        //确认订单完成
-        try {
-            Orders orders = new Orders();
-            orders.setId(orderId);
-            orders.setStatus("已完成");
-            ordersMapper.updateById(orders);
-            return Result.success("确认成功");
-        } catch (Exception e) {
-            return Result.error("确认失败");
+        Orders orders = ordersMapper.selectById(orderId);
+        if (orders == null || !Objects.equals(orders.getUserId(), currentUserId())) {
+            return Result.error("订单不存在");
         }
+        int rows = ordersMapper.casStatus(orderId, OrderStatus.PAID, OrderStatus.COMPLETED);
+        return rows == 1 ? Result.success("确认成功") : Result.error("订单状态错误");
+    }
+
+    /**
+     * 当前登录用户 id。调用方都在 hasAuthority('user') 保护下，principal 就是用户 id。
+     */
+    private Long currentUserId() {
+        return (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
     @Override
@@ -150,15 +150,14 @@ public class UserOrdersServiceImpl implements UserOrdersService {
     public Result<String> setOrdersStatus(Long orderId) {
         //查询订单
         Orders orders = ordersMapper.selectById(orderId);
-        //设置订单状态
-        if(orders.getStatus().equals("未支付")){
+        if (orders == null) {
+            return Result.error("订单不存在");
+        }
+        //设置订单状态：保留原有的两种提示，写入换成 CAS
+        if (OrderStatus.UNPAID.equals(orders.getStatus())) {
             return Result.error("订单未支付");
         }
-        if(orders.getStatus().equals("已支付")){
-            orders.setStatus("已发货");
-            ordersMapper.updateById(orders);
-            return Result.success("订单状态修改成功");
-        }
-        return Result.error("订单状态错误");
+        int rows = ordersMapper.casStatus(orderId, OrderStatus.PAID, OrderStatus.SHIPPED);
+        return rows == 1 ? Result.success("订单状态修改成功") : Result.error("订单状态错误");
     }
 }

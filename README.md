@@ -41,7 +41,7 @@ Spring Cloud 多模块工程（Spring Boot 3.3.4 / Spring Cloud 2023.0.3 / Sprin
 
 | 数据域 | 唯一归属 | 原来的越界方（现已改走 Feign） |
 |---|---|---|
-| `product`、`product_category`、`product_attribute_value` | **商家服务** `qi-suo-merchant` | 管理服务的商品查询、用户服务的商品浏览、用户服务里改 `is_hot` 的定时任务 |
+| `product`、`product_category`、`product_attribute_value` | **商家服务** `qi-suo-merchant` | 管理服务的商品查询、用户服务的商品浏览、用户服务里改 `is_hot` 的定时任务、用户服务的下单扣减与超时归还库存 |
 | `orders`、`order_item`、`cart`、`user_address` | **用户服务** `qi-suo-user` | 商家服务的订单列表/详情/发货 |
 | `user`（信息维护） | **用户服务** `qi-suo-user` | 管理服务的用户列表/状态 |
 | `merchant`（店铺信息） | **商家服务** `qi-suo-merchant` | 管理服务的商家列表/状态；用户服务取商家名 |
@@ -74,6 +74,7 @@ Spring Cloud 多模块工程（Spring Boot 3.3.4 / Spring Cloud 2023.0.3 / Sprin
 | `AdminCategoryFeignClient`（未设 `contextId`，配置键=服务名 `qi-suo-admin`） | 用户 → 管理 | `GET /api/admin/CategoryAndAttribute/getHomeCategory`（首页分类树） |
 | `MerchantProductFeignClient`（`merchantProductFeignClient`） | 用户 → 商家 | `GET /api/merchant/product/queryHotProduct`、`getProductDetail`、`POST /queryProductByCondition` |
 | `MerchantProductQueryFeignClient`（`merchantProductQueryFeignClient`） | 管理 → 商家 | `GET /api/merchant/product/queryProductList`、`getProductDetail/{id}` |
+| `MerchantProductStockFeignClient`（`merchantProductStockFeignClient`） | 用户 → 商家 | `POST /api/merchant/product/deductStock`、`restoreStock`（下单扣减、超时取消归还，见第六节） |
 | `UserOrdersFeignClient`（`userOrdersFeignClient`） | 商家 → 用户 | `GET /api/user/orders/merchantList`、`detail`、`setStatus` |
 | `UserManagementFeignClient`（`userManagementFeignClient`） | 管理 → 用户 | `POST /api/user/userManagement/list`、`PUT /status` |
 | `MerchantManagementFeignClient`（`merchantManagementFeignClient`） | 管理 → 商家；用户 → 商家 | `POST /api/merchant/merchantManagement/list`、`PUT /status`、`GET /getMerchantNameById` |
@@ -104,3 +105,61 @@ java -cp "qi-suo-service/qi-suo-adminService/target/classes;$(cat cp.txt)" com.c
 - 各服务通过 `application.yml` 的 `spring.profiles.include` 加载附加配置：`mybatis`（数据源 + MyBatis-Plus）、`minio`（文件服务）、`feign`（管理/用户/商家/文件服务）、`mq`（商家/用户服务）。
 - 本地依赖的中间件：MySQL 3306、Redis 6379、MinIO 9000、Nacos 8848、RabbitMQ 5672。Nacos 未启动时可用 `--spring.cloud.nacos.discovery.enabled=false` 单独启动某个服务做自检（此时网关无法转发）。
 - 数据库脚本未随仓库提供，需自备 `qi-suo` 库。
+
+## 六、订单超时未支付自动取消
+
+下单后 `qi-suo.order.timeout`（默认 15 分钟）内未支付，订单自动置为「已取消」并归还占用的库存。全部代码在 **用户服务**（生产者、消费者、兜底扫描都在这一个服务里）。
+
+### 6.1 链路
+
+```
+POST /api/user/cart/createOrder  (@Transactional)
+  1. 读 Redis 购物车 → 校验地址存在 → Feign 取商家名     ← 前置校验，失败即返回，不写任何东西
+  2. INSERT orders(status='未支付', stock_state=1) + INSERT order_item
+  3. Feign POST /api/merchant/product/deductStock        ← 失败则 setRollbackOnly + Result.error，订单不落库
+  4. afterCommit: 清 Redis 购物车缓存 → 投递延迟消息
+     afterCompletion(ROLLED_BACK): Feign restoreStock 补偿（扣减已成功但订单被回滚时）
+
+qi-suo.order.delay.queue  (x-message-ttl，无消费者)
+        │ 到期 → 死信
+        ▼
+qi-suo.order.cancel.queue → OrderTimeoutConsumer ──┐
+@Scheduled(60s) OrderTimeoutSweepJob ─────────────┤→ cancelUnpaidOrder(orderId)
+     · 扫 status='未支付' AND created_at<=NOW()-timeout
+     · 补偿扫 status='已取消' AND stock_state=1 AND updated_at<=NOW()-60s
+```
+
+`cancelUnpaidOrder` 的第一步是一条 CAS：`UPDATE orders SET status='已取消' WHERE id=? AND status='未支付'`。**影响行数 = 1 的那一方独占后续动作**，支付、发货、MQ 消费者、多个实例的扫描全部收敛到这一条语句上，因此不需要分布式锁，库存也不会被归还两次。
+
+### 6.2 `orders.stock_state`
+
+| 值 | 含义 |
+|---|---|
+| `0` | 本单未占用库存（**存量订单**默认值，无需数据迁移） |
+| `1` | 已占用，待归还 |
+| `2` | 已归还 |
+
+`affectedRows==1` 只保证「取消」只有一个赢家，保证不了「归还」一定成功（CAS 提交后、Feign 返回前可能宕机）。所以归还成功后再把 `stock_state` 从 1 CAS 到 2，交给补偿扫描重试 `1 → 2` 的那部分。
+
+### 6.3 配置（`qi-suo-userService/src/main/resources/application.yml`）
+
+| 配置项 | 默认 | 说明 |
+|---|---|---|
+| `qi-suo.order.timeout` | `15m` | 支持 `15m`/`900s`/`PT15M` |
+| `qi-suo.order.timeout-consumer-enabled` | `true` | 关掉只留扫描（排障用） |
+| `qi-suo.order.sweep-enabled` | `true` | 兜底扫描开关 |
+| `qi-suo.order.sweep-interval-ms` | `60000` | 扫描间隔 |
+| `qi-suo.order.sweep-batch-size` | `200` | 单轮最多处理多少单 |
+| `qi-suo.order.consumer-concurrency` / `consumer-prefetch` | `1` / `1` | 消费者并发与预取 |
+
+### 6.4 运维须知
+
+- **`x-message-ttl` 是队列声明参数，改 `timeout` 后直接重启不会生效**，只会打 `PRECONDITION_FAILED`（而且同一 channel 上的 binding 声明会连带失败）。改超时值的流程：停 userService → 删 `qi-suo.order.delay.queue`（队列里待处理的消息一并丢失）→ 改配置 → 重启。丢失的订单由扫描任务兜底。
+- 队列拓扑声明在用户服务本地（`config/MqConfig.java`），**不要**挪进 `qi-suo-common-rabbitMQ`：那个模块被 5 个服务传递依赖，且 `x-message-ttl` 是可配置项，多个服务各自 declare 会因参数不一致互相打架。
+- 不要给单条消息设 `expiration` 来实现延迟：TTL 不一致时队头消息未过期会阻塞后面的消息（队头阻塞）。队列级 TTL 没有这个问题（本场景所有消息 TTL 一致）。
+- 清理一条卡住的订单：Redis 里删 `user:cart:{userId}:{merchantId}`，DB 里对 `orders`/`order_item` 按 `order_id` 删即可；`stock_state=1` 的单删除前记得手工归还库存。
+
+### 6.5 已知残余风险
+
+- **归还库存不是幂等的**：Feign 读超时（10s）但商家侧其实已执行成功时，`stock_state` 仍是 1，下轮补偿扫描会重复归还，表现为库存虚增。彻底关掉这个窗口需要商家侧加一张 `order_stock_restore(order_id)` 幂等表，**尚未做**。
+- **扣减成功但订单没落库**：进程在扣减成功与提交之间崩溃时，这笔占用没有任何订单行可见，扫描也看不到。概率极低，需要时用对账 SQL 比对 `product.stock` 与 `SUM(order_item.quantity)`。

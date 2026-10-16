@@ -20,11 +20,14 @@
             <artifactId>qi-suo-common-mybatis</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.cyj</groupId>-->
-<!--            <artifactId>qi-suo-common-rabbitMQ</artifactId>-->
-<!--            <version>1.0-SNAPSHOT</version>-->
-<!--        </dependency>-->
+        <!-- 订单超时取消直接用到 RabbitTemplate / @RabbitListener，
+             虽然经 qi-suo-sys-log 传递依赖也能编过，但谁用了谁就显式声明，别依赖别人的依赖路径。
+             注意：直接声明不会多出一个 MessageConverter bean——Maven 会去重，jar 始终只有一份 -->
+        <dependency>
+            <groupId>com.cyj</groupId>
+            <artifactId>qi-suo-common-rabbitMQ</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 </project>

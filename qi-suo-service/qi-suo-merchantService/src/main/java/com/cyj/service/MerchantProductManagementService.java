@@ -48,4 +48,14 @@ public interface MerchantProductManagementService {
     Result<String> setStatus(Integer productId);
 
     Result<String> deleteProduct(Integer productId);
+
+    /**
+     * 整单扣减库存（服务间调用：用户服务下单时）。
+     */
+    Result<String> deductStock(ProductStockDTO productStockDTO);
+
+    /**
+     * 整单归还库存（服务间调用：订单超时取消时）。
+     */
+    Result<String> restoreStock(ProductStockDTO productStockDTO);
 }

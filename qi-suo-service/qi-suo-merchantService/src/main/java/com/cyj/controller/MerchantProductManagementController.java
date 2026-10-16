@@ -120,4 +120,22 @@ public class MerchantProductManagementController {
         return productManagementService.deleteProduct(productId);
     }
 
+    /**
+     * 整单扣减库存（服务间调用：用户服务下单时使用）
+     */
+    @PreAuthorize("hasAuthority('system')")
+    @PostMapping("/deductStock")
+    public Result<String> deductStock(@RequestBody ProductStockDTO productStockDTO) {
+        return productManagementService.deductStock(productStockDTO);
+    }
+
+    /**
+     * 整单归还库存（服务间调用：订单超时取消时使用）
+     */
+    @PreAuthorize("hasAuthority('system')")
+    @PostMapping("/restoreStock")
+    public Result<String> restoreStock(@RequestBody ProductStockDTO productStockDTO) {
+        return productManagementService.restoreStock(productStockDTO);
+    }
+
 }

@@ -11,6 +11,8 @@ import com.cyj.dvo.HotProductDVO;
 import com.cyj.dvo.QueryProductDVO;
 import com.cyj.entity.Product;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -24,6 +26,18 @@ import java.util.List;
  */
 @Mapper
 public interface ProductMapper extends BaseMapper<Product> {
+
+    /**
+     * 条件扣减库存。返回影响行数，0 表示库存不足（
+     */
+    @Update("UPDATE product SET stock = stock - #{quantity} WHERE id = #{productId} AND stock >= #{quantity}")
+    int deductStock(@Param("productId") Long productId, @Param("quantity") Integer quantity);
+
+    /**
+     * 归还库存。
+     */
+    @Update("UPDATE product SET stock = COALESCE(stock, 0) + #{quantity} WHERE id = #{productId}")
+    int restoreStock(@Param("productId") Long productId, @Param("quantity") Integer quantity);
 
     /**
      * 查询商品列表

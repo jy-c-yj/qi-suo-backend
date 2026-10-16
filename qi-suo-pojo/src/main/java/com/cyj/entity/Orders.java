@@ -72,6 +72,12 @@ public class Orders implements Serializable {
     private String status;
 
     /**
+     * 库存状态：0-未占用 1-已占用待归还 2-已归还
+     */
+    @TableField("stock_state")
+    private Integer stockState;
+
+    /**
      * 创建时间
      */
     @TableField("created_at")
