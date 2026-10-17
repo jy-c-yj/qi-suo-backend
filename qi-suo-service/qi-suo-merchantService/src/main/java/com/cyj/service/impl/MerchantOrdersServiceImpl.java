@@ -23,12 +23,12 @@ public class MerchantOrdersServiceImpl implements MerchantOrdersService {
     private UserOrdersFeignClient userOrdersFeignClient;
 
     @Override
-    public PageResult<MerchantOrdersDVO> getOrders(Integer pageNum, Integer pageSize) {
-        log.info("分页查询所有订单列表");
+    public PageResult<MerchantOrdersDVO> getOrders(Integer pageNum, Integer pageSize, String status, String sort) {
+        log.info("分页查询商家订单列表");
 
         //获取商家id
         Long merchantId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return userOrdersFeignClient.merchantList(merchantId, pageNum, pageSize);
+        return userOrdersFeignClient.merchantList(merchantId, pageNum, pageSize, status, sort);
     }
 
     @Override

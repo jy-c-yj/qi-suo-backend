@@ -14,7 +14,8 @@ import org.springframework.stereotype.Component;
 public class UserOrdersFeignClientFallBack implements UserOrdersFeignClient {
 
     @Override
-    public PageResult<MerchantOrdersDVO> merchantList(Long merchantId, Integer pageNum, Integer pageSize) {
+    public PageResult<MerchantOrdersDVO> merchantList(Long merchantId, Integer pageNum, Integer pageSize,
+                                                      String status, String sort) {
         log.error("远程调用 -> qi-suo-user  方法 -> merchantList 出错");
         PageResult<MerchantOrdersDVO> pageResult = new PageResult<>();
         pageResult.setRows(java.util.List.of());

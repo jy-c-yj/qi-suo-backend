@@ -59,8 +59,10 @@ public class UserOrdersController {
     @GetMapping("/merchantList")
     public PageResult<MerchantOrdersDVO> merchantList(@RequestParam Long merchantId,
                                                      @RequestParam Integer pageNum,
-                                                     @RequestParam Integer pageSize) {
-        return userOrdersService.merchantList(merchantId, pageNum, pageSize);
+                                                     @RequestParam Integer pageSize,
+                                                     @RequestParam(required = false) String status,
+                                                     @RequestParam(required = false) String sort) {
+        return userOrdersService.merchantList(merchantId, pageNum, pageSize, status, sort);
     }
 
     //商家发货（供商家服务经服务间调用使用）

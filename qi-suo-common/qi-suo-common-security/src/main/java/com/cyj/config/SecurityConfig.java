@@ -6,6 +6,7 @@ import com.cyj.common.WhitelistURL;
 import com.cyj.filter.AuthFilter;
 import com.cyj.handler.RestAccessDeniedHandler;
 import com.cyj.handler.RestAuthEntryPoint;
+import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -86,8 +87,14 @@ public class SecurityConfig {
 //                .formLogin(Customizer.withDefaults())
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 基于token，不需要session
                 .authorizeHttpRequests((authz) -> authz
+                        // 容器把异常转发到 /error 时也是一次 ERROR 分发；
+                        // 不放行的话真实异常会被鉴权入口改写成 401，掩盖原始错误
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(
                                 "/health",
+                                // /error 本身不是业务接口：映射不存在时容器会转发到这里，
+                                // 不放行会让一个 404 被鉴权入口改写成 401，前端误判为登录过期
+                                "/error",
                                 "/*/*/*/login/**",
                                 "/api/auth/kaptcha/**",
                                 "/api/*/test/**",

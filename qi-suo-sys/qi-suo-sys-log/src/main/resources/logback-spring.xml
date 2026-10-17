@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  放在 qi-suo-sys-log 的 resources 根下，各服务只要依赖本模块就自动生效，无需每个服务各配一份。
-  traceId 由 com.cyj.filter.TraceIdMdcFilter 写入 MDC，这里用 %X{traceId:-} 取，
-  取不到时输出空串，不会让格式错位。
--->
+
 <configuration>
 
     <!-- 引入 Spring Boot 默认转换器（%clr 着色等）与颜色定义，保留原有的着色能力 -->
@@ -19,10 +15,6 @@
         </encoder>
     </appender>
 
-    <!--
-      只管控制台。各服务 application-*.yml 里的 logging.level.* 由 Spring Boot 以编程方式
-      应用到 logger 上，不受这里 root level 影响。
-    -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
     </root>

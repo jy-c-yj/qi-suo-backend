@@ -5,34 +5,48 @@ server:
 spring:
   application:
     name: qi-suo-gateway
-
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   cloud:
     nacos:
-      server-addr: 127.0.0.1:8848
-    gateway:
-      routes:
-        - id: auth-route
-          uri: lb://qi-suo-auth
-          predicates:
-            - Path=/api/auth/**
-        - id: user-route
-          uri: lb://qi-suo-user
-          predicates:
-            - Path=/api/user/**
-        - id: admin-route
-          uri: lb://qi-suo-admin
-          predicates:
-            - Path=/api/admin/**
-        - id: merchant-route
-          uri: lb://qi-suo-merchant
-          predicates:
-            - Path=/api/merchant/**
-        - id: file-route
-          uri: lb://qi-suo-file
-          predicates:
-            - Path=/api/file/**
-jwt:
-  accessExpire: 86400 # 24小时（秒）
-  refreshExpire: 604800 # 7天（秒）
-  secret-key: Y6mQMQ+jDKiAp1jwzAqLa7fNp0GzMx54QYpqDIpdZe4=
+      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+      username: ${NACOS_USERNAME:nacos}
+      password: ${NACOS_PASSWORD:nacos}
+      discovery:
+        namespace: ${NACOS_NAMESPACE:${spring.profiles.active:dev}}
+      config:
+        namespace: ${NACOS_NAMESPACE:${spring.profiles.active:dev}}
+        group: DEFAULT_GROUP
+        file-extension: yaml
+  config:
+    import:
+      - nacos:qi-suo-common.yaml
+      - nacos:${spring.application.name}.yaml
 
+#    gateway:
+#      routes:
+#        - id: auth-route
+#          uri: lb://qi-suo-auth
+#          predicates:
+#            - Path=/api/auth/**
+#        - id: user-route
+#          uri: lb://qi-suo-user
+#          predicates:
+#            - Path=/api/user/**
+#        - id: admin-route
+#          uri: lb://qi-suo-admin
+#          predicates:
+#            - Path=/api/admin/**
+#        - id: merchant-route
+#          uri: lb://qi-suo-merchant
+#          predicates:
+#            - Path=/api/merchant/**
+#        - id: file-route
+#          uri: lb://qi-suo-file
+#          predicates:
+#            - Path=/api/file/**
+#jwt:
+#  accessExpire: 86400 # 24小时（秒）
+#  refreshExpire: 604800 # 7天（秒）
+#  secret-key: Y6mQMQ+jDKiAp1jwzAqLa7fNp0GzMx54QYpqDIpdZe4=
+#

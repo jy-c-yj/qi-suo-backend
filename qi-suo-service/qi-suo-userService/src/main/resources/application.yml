@@ -1,33 +1,29 @@
 server:
-  port:
-    8085
+  port: 8085
+
 spring:
-  profiles:
-    include:
-      - redisson
-      - mybatis
-      - feign
-      - mq
   application:
     name: qi-suo-user
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   cloud:
     nacos:
-      server-addr: 127.0.0.1:8848
+      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+      username: ${NACOS_USERNAME:nacos}
+      password: ${NACOS_PASSWORD:nacos}
+      discovery:
+        namespace: ${NACOS_NAMESPACE:${spring.profiles.active:dev}}
+      config:
+        namespace: ${NACOS_NAMESPACE:${spring.profiles.active:dev}}
+        group: DEFAULT_GROUP
+        file-extension: yaml
+  config:
+    import:
+      - nacos:qi-suo-common.yaml
+      - nacos:qi-suo-datasource.yaml
+      - nacos:${spring.application.name}.yaml
 
-# 订单超时未支付自动取消
-qi-suo:
-  order:
-    timeout:
-    # 延迟消息消费者开关（排障时可关掉，只留扫描）
-    timeout-consumer-enabled: true
-    # 兜底扫描开关
-    sweep-enabled: true
-    # 扫描间隔，毫秒
-    sweep-interval-ms: 60000
-    # 单轮扫描处理的订单上限
-    sweep-batch-size: 200
-    # 消费者并发数与预取数
-    consumer-concurrency: 1
-    consumer-prefetch: 1
+
+
 
 

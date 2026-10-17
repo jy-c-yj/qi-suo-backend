@@ -26,7 +26,9 @@ public interface UserOrdersFeignClient {
     @GetMapping("/api/user/orders/merchantList")
     PageResult<MerchantOrdersDVO> merchantList(@RequestParam("merchantId") Long merchantId,
                                                @RequestParam("pageNum") Integer pageNum,
-                                               @RequestParam("pageSize") Integer pageSize);
+                                               @RequestParam("pageSize") Integer pageSize,
+                                               @RequestParam(value = "status", required = false) String status,
+                                               @RequestParam(value = "sort", required = false) String sort);
 
     /**
      * 订单详情

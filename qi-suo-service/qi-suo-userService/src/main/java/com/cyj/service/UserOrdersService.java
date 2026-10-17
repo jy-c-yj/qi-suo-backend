@@ -19,8 +19,12 @@ public interface UserOrdersService {
 
     /**
      * 商家维度的订单列表（供商家服务经服务间调用使用）
+     *
+     * @param status 可选的状态过滤；为空表示全部
+     * @param sort   时间排序：asc 最早在前，其余（默认）最新在前
      */
-    PageResult<MerchantOrdersDVO> merchantList(Long merchantId, Integer pageNum, Integer pageSize);
+    PageResult<MerchantOrdersDVO> merchantList(Long merchantId, Integer pageNum, Integer pageSize,
+                                               String status, String sort);
 
     /**
      * 商家发货：已支付 -> 已发货（供商家服务经服务间调用使用）

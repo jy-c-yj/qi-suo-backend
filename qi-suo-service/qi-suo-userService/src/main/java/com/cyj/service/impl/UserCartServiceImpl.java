@@ -10,6 +10,7 @@ import com.cyj.dto.CreateOrderDTO;
 import com.cyj.dto.ProductStockDTO;
 import com.cyj.dto.ProductStockItemDTO;
 import com.cyj.dvo.CartDVO;
+import com.cyj.dvo.CartMerchantGroupDVO;
 import com.cyj.dvo.UserOrdersDetailDVO;
 import com.cyj.entity.*;
 import com.cyj.exception.ProductIsNotExistException;
@@ -31,8 +32,11 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -190,6 +194,191 @@ public class UserCartServiceImpl implements UserCartService {
             cartDVOList.add(cartDVO);
         }
         return Result.success(cartDVOList);
+    }
+
+    @Override
+    public Result<List<CartMerchantGroupDVO>> getAllCartList() {
+        Long userId = currentUserId();
+
+        // DB 行只用来枚举商家：下单成功后 createOrder 只删 Redis、不删 DB，
+        // 如果这里回退 DB 明细，已结算的商品会重新出现在购物车里
+        List<Cart> dbCarts = cartMapper.selectList(
+                new QueryWrapper<Cart>().eq("user_id", userId));
+        Set<Long> merchantIds = new LinkedHashSet<>();
+        for (Cart cart : dbCarts) {
+            if (cart.getMerchantId() != null) {
+                merchantIds.add(cart.getMerchantId());
+            }
+        }
+
+        List<CartMerchantGroupDVO> groups = new ArrayList<>();
+        for (Long merchantId : merchantIds) {
+            // 明细以 Redis 为准，缓存为空说明购物车已结算或已失效
+            List<Cart> redisCarts = redissonUtil.getList(cartKey(userId, merchantId));
+            if (redisCarts == null || redisCarts.isEmpty()) {
+                continue;
+            }
+
+            List<CartDVO> items = new ArrayList<>();
+            BigDecimal totalPrice = BigDecimal.ZERO;
+            int totalQuantity = 0;
+            for (Cart cart : redisCarts) {
+                Product product = productMapper.selectById(cart.getProductId());
+                if (product == null) {
+                    log.warn("购物车中的商品已不存在，跳过展示, userId={}, productId={}",
+                            userId, cart.getProductId());
+                    continue;
+                }
+                items.add(CartDVO.newCartDVO(cart, product));
+                if (cart.getTotalPrice() != null) {
+                    totalPrice = totalPrice.add(cart.getTotalPrice());
+                }
+                if (cart.getQuantity() != null) {
+                    totalQuantity += cart.getQuantity();
+                }
+            }
+            if (items.isEmpty()) {
+                continue;
+            }
+
+            groups.add(new CartMerchantGroupDVO(
+                    merchantId,
+                    getMerchantName(merchantId),
+                    items,
+                    totalPrice,
+                    totalQuantity));
+        }
+        groups.sort(Comparator.comparing(CartMerchantGroupDVO::getMerchantId));
+        return Result.success(groups);
+    }
+
+    @Override
+    @Transactional
+    public Result<CartDVO> updateCartItemQuantity(Long productId, Integer quantity) {
+        Long userId = currentUserId();
+        if (quantity == null || quantity < 1) {
+            return Result.error("商品数量必须大于 0");
+        }
+
+        Product product = productMapper.selectById(productId);
+        if (product == null) {
+            return Result.error("商品不存在");
+        }
+        if (product.getStock() == null || product.getStock() < quantity) {
+            return Result.error("商品库存不足");
+        }
+
+        Cart dbCart = cartMapper.selectOne(new QueryWrapper<Cart>()
+                .eq("user_id", userId)
+                .eq("product_id", productId));
+        Long merchantId = dbCart != null && dbCart.getMerchantId() != null
+                ? dbCart.getMerchantId()
+                : product.getMerchantId();
+
+        List<Cart> redisCarts = redissonUtil.getList(cartKey(userId, merchantId));
+        if (redisCarts == null || redisCarts.isEmpty()) {
+            return Result.error("购物车已失效，请刷新后重试");
+        }
+
+        int index = -1;
+        for (int i = 0; i < redisCarts.size(); i++) {
+            if (Objects.equals(redisCarts.get(i).getProductId(), productId)) {
+                index = i;
+                break;
+            }
+        }
+        if (index < 0) {
+            return Result.error("购物车中不存在该商品");
+        }
+
+        Cart cart = redisCarts.get(index);
+        cart.setMerchantId(merchantId);
+        cart.setPrice(product.getPrice());
+        cart.setQuantity(quantity);
+        cart.setTotalPrice(product.getPrice().multiply(BigDecimal.valueOf(quantity)));
+
+        // 先落库再写缓存：缓存写失败时抛异常让事务回滚，避免两端数量长期不一致
+        if (dbCart == null) {
+            cart.setId(null);
+            cart.setUserId(userId);
+            cartMapper.insert(cart);
+        } else {
+            dbCart.setPrice(cart.getPrice());
+            dbCart.setQuantity(cart.getQuantity());
+            dbCart.setTotalPrice(cart.getTotalPrice());
+            cartMapper.updateById(dbCart);
+        }
+
+        try {
+            redisCarts.set(index, cart);
+        } catch (Exception e) {
+            log.error("修改购物车数量写缓存失败, userId={}, productId={}", userId, productId, e);
+            throw new RuntimeException("修改购物车数量失败", e);
+        }
+
+        return Result.success(CartDVO.newCartDVO(cart, product));
+    }
+
+    @Override
+    @Transactional
+    public Result<String> removeCartItem(Long productId) {
+        Long userId = currentUserId();
+
+        Cart dbCart = cartMapper.selectOne(new QueryWrapper<Cart>()
+                .eq("user_id", userId)
+                .eq("product_id", productId));
+        Product product = productMapper.selectById(productId);
+        Long merchantId = dbCart != null && dbCart.getMerchantId() != null
+                ? dbCart.getMerchantId()
+                : (product != null ? product.getMerchantId() : null);
+
+        if (merchantId != null) {
+            String key = cartKey(userId, merchantId);
+            List<Cart> redisCarts = redissonUtil.getList(key);
+            if (redisCarts != null && !redisCarts.isEmpty()) {
+                // 从后往前删，避免删除过程中下标错位
+                for (int i = redisCarts.size() - 1; i >= 0; i--) {
+                    if (Objects.equals(redisCarts.get(i).getProductId(), productId)) {
+                        redisCarts.remove(i);
+                    }
+                }
+                if (redisCarts.isEmpty()) {
+                    redissonUtil.delete(key);
+                }
+            }
+        }
+
+        if (dbCart != null) {
+            cartMapper.deleteById(dbCart.getId());
+        }
+        // 本来就不存在也返回成功，前端重复点击不会报错
+        return Result.success("已移除");
+    }
+
+    private Long currentUserId() {
+        return (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    private String cartKey(Long userId, Long merchantId) {
+        return RedissonKey.USER_CART_KEY + userId + ":" + merchantId;
+    }
+
+    /**
+     * 商家名取不到时用 ID 兜底，不能因为一个 Feign 调用失败让整个购物车列表报错。
+     */
+    private String getMerchantName(Long merchantId) {
+        try {
+            Result<String> result = merchantManagementFeignClient.getMerchantNameById(merchantId);
+            if (result != null
+                    && Integer.valueOf(1).equals(result.getCode())
+                    && result.getData() != null
+                    && !result.getData().isBlank()) {
+                return result.getData();
+            }
+        } catch (Exception e) {
+            log.warn("获取商家名称失败, merchantId={}", merchantId, e);
+        }
+        return "商家" + merchantId;
     }
 
     @Override

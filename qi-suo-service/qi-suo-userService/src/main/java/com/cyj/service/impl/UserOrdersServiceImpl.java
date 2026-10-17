@@ -42,8 +42,10 @@ public class UserOrdersServiceImpl implements UserOrdersService {
     public Result<List<UserOrdersDVO>> list() {
         //获取用户id
         Long userID = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        //查询数据库，获取订单列表
-        List<Orders> list = ordersMapper.selectList (new QueryWrapper<Orders>().eq("user_id",userID));
+        //查询数据库，获取订单列表：时间近的在前
+        List<Orders> list = ordersMapper.selectList(new QueryWrapper<Orders>()
+                .eq("user_id", userID)
+                .orderByDesc("created_at"));
         //返回结果
         List<UserOrdersDVO> list1 = new ArrayList<>();
         for (Orders orders : list){
@@ -121,7 +123,8 @@ public class UserOrdersServiceImpl implements UserOrdersService {
         if (orders == null || !Objects.equals(orders.getUserId(), currentUserId())) {
             return Result.error("订单不存在");
         }
-        int rows = ordersMapper.casStatus(orderId, OrderStatus.PAID, OrderStatus.COMPLETED);
+        // 用户的「确认收货」发生在商家发货之后，正确迁移是「已发货 -> 已完成」
+        int rows = ordersMapper.casStatus(orderId, OrderStatus.SHIPPED, OrderStatus.COMPLETED);
         return rows == 1 ? Result.success("确认成功") : Result.error("订单状态错误");
     }
 
@@ -133,12 +136,24 @@ public class UserOrdersServiceImpl implements UserOrdersService {
     }
 
     @Override
-    public PageResult<MerchantOrdersDVO> merchantList(Long merchantId, Integer pageNum, Integer pageSize) {
-        log.info("分页查询所有订单列表");
+    public PageResult<MerchantOrdersDVO> merchantList(Long merchantId, Integer pageNum, Integer pageSize,
+                                                      String status, String sort) {
+        log.info("分页查询商家订单列表, merchantId={}, status={}, sort={}", merchantId, status, sort);
 
-        //分页查询所有订单列表
-        Page<Orders> page = new Page<>(pageNum,pageSize);
-        List<Orders> ordersList = ordersMapper.selectList(page,new QueryWrapper<Orders>().eq("merchant_id",merchantId));
+        QueryWrapper<Orders> query = new QueryWrapper<Orders>().eq("merchant_id", merchantId);
+        if (status != null && !status.isBlank()) {
+            // 兼容历史数据里的「待支付」
+            if (OrderStatus.UNPAID.equals(status)) {
+                query.in("status", OrderStatus.UNPAID, "待支付");
+            } else {
+                query.eq("status", status);
+            }
+        }
+        // 默认最新在前；sort=asc 时最早在前
+        query.orderBy(true, "asc".equalsIgnoreCase(sort), "created_at");
+
+        Page<Orders> page = new Page<>(pageNum, pageSize);
+        List<Orders> ordersList = ordersMapper.selectList(page, query);
         List<MerchantOrdersDVO> list = ordersList.stream().map(MerchantOrdersDVO::toMerchantOrdersDVO).toList();
         PageResult<MerchantOrdersDVO> pageResult = new PageResult<>();
         pageResult.setRows(list);

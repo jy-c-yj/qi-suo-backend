@@ -3,6 +3,7 @@ package com.cyj.service;
 import com.cyj.common.Result;
 import com.cyj.dto.CreateOrderDTO;
 import com.cyj.dvo.CartDVO;
+import com.cyj.dvo.CartMerchantGroupDVO;
 import com.cyj.dvo.UserOrdersDetailDVO;
 
 import java.util.List;
@@ -21,6 +22,21 @@ public interface UserCartService {
     Result<String> deleteCartItem(Long productId);
 
     Result<List<CartDVO>> getCartList(Long merchantId);
+
+    /**
+     * 查询当前用户的全部购物车，按商家分组
+     */
+    Result<List<CartMerchantGroupDVO>> getAllCartList();
+
+    /**
+     * 将购物车中某个商品的数量设置为指定值
+     */
+    Result<CartDVO> updateCartItemQuantity(Long productId, Integer quantity);
+
+    /**
+     * 从购物车中整项移除某个商品（现有 delete 是数量 -1）
+     */
+    Result<String> removeCartItem(Long productId);
 
     Result<UserOrdersDetailDVO> createOrder(CreateOrderDTO createOrderDTO);
 }

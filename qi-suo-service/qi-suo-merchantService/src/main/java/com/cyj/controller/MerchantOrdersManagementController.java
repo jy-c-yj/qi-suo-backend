@@ -21,8 +21,9 @@ public class MerchantOrdersManagementController {
     //分页查询所有订单列表
     @PreAuthorize("hasAuthority('Merchant')")
     @GetMapping("/list")
-    public PageResult<MerchantOrdersDVO> getOrders(Integer pageNum, Integer pageSize) {
-        return merchantOrdersService.getOrders(pageNum,pageSize);
+    public PageResult<MerchantOrdersDVO> getOrders(Integer pageNum, Integer pageSize,
+                                                   String status, String sort) {
+        return merchantOrdersService.getOrders(pageNum, pageSize, status, sort);
     }
     //查询订单详情
     @PreAuthorize("hasAuthority('Merchant')")

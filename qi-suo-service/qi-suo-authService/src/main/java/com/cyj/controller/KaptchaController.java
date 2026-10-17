@@ -9,7 +9,6 @@ import com.google.code.kaptcha.Producer;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import javax.imageio.ImageIO;
@@ -62,24 +61,28 @@ public class KaptchaController {
 
     @PostMapping("/verify")
     public Result<String> verify(@RequestBody KaptchaDTO kaptchaDTO) {
-        String key = kaptchaDTO.getCaptchaID();
-        //获取用户输入的验证码，并转换为小写
-        String inputCode = kaptchaDTO.getInputCode().toLowerCase();
-        //从redis获取验证码文本
-        String captchatxt = redissonUtil.getValue(key);
-        //转换为小写
-        captchatxt = captchatxt.toLowerCase();
-
-
-        if (inputCode == null || inputCode.trim().isEmpty()) {
-            return Result.error("验证码不能为空");
-        } else if (captchatxt == null || captchatxt.trim().isEmpty()) {
+        if (kaptchaDTO == null || kaptchaDTO.getCaptchaID() == null
+                || kaptchaDTO.getCaptchaID().trim().isEmpty()) {
             return Result.error("验证码已过期");
-        } else if (!captchatxt.equals(inputCode)) {
+        }
+        if (kaptchaDTO.getInputCode() == null || kaptchaDTO.getInputCode().trim().isEmpty()) {
+            return Result.error("验证码不能为空");
+        }
+
+        String key = kaptchaDTO.getCaptchaID();
+        String inputCode = kaptchaDTO.getInputCode().trim();
+        // 从 redis 获取验证码文本；key 不存在说明已过期
+        String captchaText = redissonUtil.getValue(key);
+        if (captchaText == null || captchaText.trim().isEmpty()) {
+            return Result.error("验证码已过期");
+        }
+
+        if (!captchaText.equalsIgnoreCase(inputCode)) {
             return Result.error("验证码输入错误");
         }
 
+        // 校验通过后立即失效，防止同一个验证码被重复使用
+        redissonUtil.delete(key);
         return Result.success();
-
     }
 }

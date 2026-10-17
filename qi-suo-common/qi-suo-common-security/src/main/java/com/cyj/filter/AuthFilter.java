@@ -23,7 +23,7 @@ public class AuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response, jakarta.servlet.FilterChain filterChain) throws ServletException, IOException, ServletException {
         String json = request.getHeader("Auth-claims");
         if(json == null) {
-            log.error("获取权限出错");
+            log.info("用户未认证");
             filterChain.doFilter(request, response);
             return;
         }
