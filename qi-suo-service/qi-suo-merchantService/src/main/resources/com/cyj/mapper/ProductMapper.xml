@@ -30,11 +30,24 @@
             <result column="category_name"/>
         </collection>
 
+        <collection property="categoryIds"
+                    ofType="java.lang.Integer"
+                    javaType="java.util.ArrayList">
+            <result column="category_id"/>
+        </collection>
+
         <collection property="attributeAndValues"
                     ofType="com.cyj.common.AttributeAndValue"
                     javaType="java.util.ArrayList">
+            <result property="attributeValueId" column="attr_value_id"/>
             <result property="attributeName" column="attr_name"/>
             <result property="attributeValue" column="attr_value"/>
+        </collection>
+
+        <collection property="attributeValueIds"
+                    ofType="java.lang.Integer"
+                    javaType="java.util.ArrayList">
+            <result column="attr_value_id"/>
         </collection>
     </resultMap>
     <select id="getProductDVOList" resultType="com.cyj.dvo.BackgroundGetProductDVO">
@@ -54,8 +67,9 @@
         p.updated_at AS updatedAt
         FROM product p
         LEFT JOIN merchant m ON p.merchant_id = m.merchant_id
-        AND p.is_deleted = 0
         <where>
+            <!-- 逻辑删除条件必须放在 WHERE：放在 JOIN ON 里已删除商品仍会被查出 -->
+            AND p.is_deleted = 0
             <!-- 按商品ID精确查询 -->
             <if test="backgroundGetProductByConditionDTO.id != null">
                 AND p.id = #{backgroundGetProductByConditionDTO.id}
@@ -71,6 +85,10 @@
             <!-- 按SKU精确查询 -->
             <if test="backgroundGetProductByConditionDTO.sku != null and backgroundGetProductByConditionDTO.sku.trim() != ''">
                 AND p.sku = #{backgroundGetProductByConditionDTO.sku}
+            </if>
+            <!-- 按商品状态筛选 -->
+            <if test="backgroundGetProductByConditionDTO.status != null">
+                AND p.status = #{backgroundGetProductByConditionDTO.status}
             </if>
         </where>
         ORDER BY p.created_at DESC
@@ -97,8 +115,10 @@
             p.updated_at,
             m.merchant_name,
             -- 分类相关字段
+            pc.category_id AS category_id,
             c.name AS category_name,
             -- 属性相关字段
+            av.id AS attr_value_id,
             a.attribute_name AS attr_name,
             av.value AS attr_value
         FROM product p
@@ -161,7 +181,7 @@
                 AND p.product_name LIKE CONCAT('%', #{query.productName}, '%')
             </if>
             <if test="query.categoryId != null">
-                AND pc.category_id = ${query.categoryId}
+                AND pc.category_id = #{query.categoryId}
             </if>
             <if test="query.merchantName != null and query.merchantName.trim() != ''">
                 AND m.merchant_name LIKE CONCAT('%', #{query.merchantName}, '%')

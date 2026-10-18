@@ -45,7 +45,13 @@ public interface MerchantProductManagementService {
 
     Result<String> deleteProductAttributeValue(DeleteProductAttributeValueDTO deleteProductAttributeValueDTO);
 
-    Result<String> setStatus(Integer productId);
+    /**
+     * 设置商品状态
+     *
+     * @param productId 商品 id
+     * @param status    1=上架，0=下架；为 null 时保留原来的 toggle 行为
+     */
+    Result<String> setStatus(Integer productId, Integer status);
 
     Result<String> deleteProduct(Integer productId);
 

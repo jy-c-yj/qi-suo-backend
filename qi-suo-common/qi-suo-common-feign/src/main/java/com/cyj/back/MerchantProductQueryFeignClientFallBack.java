@@ -25,4 +25,10 @@ public class MerchantProductQueryFeignClientFallBack implements MerchantProductQ
         log.error("远程调用 -> qi-suo-merchant  方法 -> getProductDetail 出错");
         return Result.error("查询商品详情失败");
     }
+
+    @Override
+    public Result<String> setStatus(Integer productId, Integer status) {
+        log.error("远程调用 -> qi-suo-merchant  方法 -> setStatus 出错");
+        return Result.error("设置商品状态失败");
+    }
 }

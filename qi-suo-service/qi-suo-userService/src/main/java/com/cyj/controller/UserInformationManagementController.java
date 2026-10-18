@@ -3,6 +3,7 @@ package com.cyj.controller;
 
 import com.cyj.Annotation.Log;
 import com.cyj.common.Result;
+import com.cyj.dto.ChangePasswordDTO;
 import com.cyj.dto.UserAddressDTO;
 import com.cyj.dto.UserInformationUpdateDTO;
 import com.cyj.dvo.UserAddressDVO;
@@ -32,6 +33,13 @@ public class UserInformationManagementController {
     @PutMapping("/updateUserInformation")
     public Result<Boolean> updateUserInformation(@RequestBody UserInformationUpdateDTO userInformationUpdateDTO){
         return userInformationManagementService.updateUserInformation(userInformationUpdateDTO);
+    }
+    //修改密码
+    @Log(module = "用户信息", desc = "修改密码")
+    @PreAuthorize("hasAuthority('USER')")
+    @PostMapping("/changePassword")
+    public Result<Boolean> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO){
+        return userInformationManagementService.changePassword(changePasswordDTO);
     }
     //新增用户地址
     @Log(module = "用户信息", desc = "新增收货地址")

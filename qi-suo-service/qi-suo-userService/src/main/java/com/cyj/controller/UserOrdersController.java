@@ -27,8 +27,8 @@ public class UserOrdersController {
     //查询所有订单列表
     @PreAuthorize("hasAuthority('USER')")
     @GetMapping("/list")
-    public Result<List<UserOrdersDVO>> list() {
-        return userOrdersService.list();
+    public Result<List<UserOrdersDVO>> list(@RequestParam(required = false) String status) {
+        return userOrdersService.list(status);
     }
 
     //查询订单详情（用户端用，同时也被商家服务经服务间调用）

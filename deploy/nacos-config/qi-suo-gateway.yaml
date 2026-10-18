@@ -1,0 +1,26 @@
+
+
+ spring:
+   cloud:
+     gateway:
+       routes:
+         - id: auth-route
+           uri: lb://qi-suo-auth
+           predicates:
+             - Path=/api/auth/**
+         - id: user-route
+           uri: lb://qi-suo-user
+           predicates:
+             - Path=/api/user/**
+         - id: admin-route
+           uri: lb://qi-suo-admin
+           predicates:
+             - Path=/api/admin/**
+         - id: merchant-route
+           uri: lb://qi-suo-merchant
+           predicates:
+             - Path=/api/merchant/**
+         - id: file-route
+           uri: lb://qi-suo-file
+           predicates:
+             - Path=/api/file/**

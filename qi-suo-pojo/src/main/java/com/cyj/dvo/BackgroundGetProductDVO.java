@@ -46,6 +46,11 @@ public class BackgroundGetProductDVO implements Serializable {
     private String productName;
 
     /**
+     * 商品图片url
+     */
+    private String productImageUrl;
+
+    /**
      * 销售价格
      */
 

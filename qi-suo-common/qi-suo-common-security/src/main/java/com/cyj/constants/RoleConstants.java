@@ -20,7 +20,11 @@ public  class RoleConstants {
     /**
      * 普通用户
      */
-    public static final String USER = "user";
+    public static final String USER = "USER";
+    /**
+     * 服务间调用身份（Feign 拦截器注入）
+     */
+    public static final String SYSTEM = "system";
     /**
      * 错误
      */

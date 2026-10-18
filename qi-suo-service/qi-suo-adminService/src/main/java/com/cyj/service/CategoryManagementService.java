@@ -27,6 +27,11 @@ public interface CategoryManagementService {
     Result<String> setCategoryEnabled(Long id, int pageNum);
 
     /**
+     * 显式设为禁用
+     */
+    Result<String> setCategoryNotEnabled(Long id, int pageNum);
+
+    /**
      * 删除
      * @param id
      * @return

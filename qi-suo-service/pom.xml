@@ -93,4 +93,18 @@
 
     </dependencies>
 
+    <build>
+        <plugins>
+            <!--
+              5 个业务服务都是可启动模块，必须 repackage 成可执行 jar，
+              否则 java -jar 会报 no main manifest attribute。
+              spring-boot-starter-parent 已管理版本，这里只声明即可。
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>

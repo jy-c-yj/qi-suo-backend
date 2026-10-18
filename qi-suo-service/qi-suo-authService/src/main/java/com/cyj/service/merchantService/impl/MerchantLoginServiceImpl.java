@@ -75,6 +75,8 @@ public class MerchantLoginServiceImpl implements MerchantService {
         AccessTokenDVO accessTokenDVO = AccessTokenDVO.builder()
                 .access_token(accessToken)
                 .refresh_token_key(key)
+                .id(merchant.getMerchantId())
+                .roles(roles)
                 .build();
 
         //返回访问令牌

@@ -39,13 +39,21 @@ public class UserOrdersServiceImpl implements UserOrdersService {
     @Autowired
     private MerchantManagementFeignClient merchantManagementFeignClient;
     @Override
-    public Result<List<UserOrdersDVO>> list() {
+    public Result<List<UserOrdersDVO>> list(String status) {
         //获取用户id
         Long userID = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        QueryWrapper<Orders> query = new QueryWrapper<Orders>().eq("user_id", userID);
+        if (status != null && !status.isBlank()) {
+            // 兼容历史数据里的「待支付」
+            if (OrderStatus.UNPAID.equals(status)) {
+                query.in("status", OrderStatus.UNPAID, "待支付");
+            } else {
+                query.eq("status", status);
+            }
+        }
+        query.orderByDesc("created_at");
         //查询数据库，获取订单列表：时间近的在前
-        List<Orders> list = ordersMapper.selectList(new QueryWrapper<Orders>()
-                .eq("user_id", userID)
-                .orderByDesc("created_at"));
+        List<Orders> list = ordersMapper.selectList(query);
         //返回结果
         List<UserOrdersDVO> list1 = new ArrayList<>();
         for (Orders orders : list){

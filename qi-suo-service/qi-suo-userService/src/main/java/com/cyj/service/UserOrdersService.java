@@ -9,7 +9,12 @@ import com.cyj.dvo.UserOrdersDetailDVO;
 import java.util.List;
 
 public interface UserOrdersService {
-    Result<List<UserOrdersDVO>> list();
+    /**
+     * 当前用户的订单列表
+     *
+     * @param status 可选的状态过滤；为空表示全部
+     */
+    Result<List<UserOrdersDVO>> list(String status);
 
     Result<UserOrdersDetailDVO> detail(Long orderId);
 

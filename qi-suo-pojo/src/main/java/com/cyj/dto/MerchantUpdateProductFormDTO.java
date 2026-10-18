@@ -74,5 +74,17 @@ public class MerchantUpdateProductFormDTO implements Serializable {
 
     private Boolean isNew;
 
+    /**
+     * 是否热销
+     */
+
+    private Boolean isHot;
+
+    /**
+     * 商品图片url
+     */
+
+    private String productImageUrl;
+
 
 }

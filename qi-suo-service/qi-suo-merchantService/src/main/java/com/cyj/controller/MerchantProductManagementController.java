@@ -5,13 +5,18 @@ import com.cyj.Annotation.Log;
 import com.cyj.common.PageResult;
 import com.cyj.common.Result;
 import com.cyj.dto.*;
+import com.cyj.dvo.AttributeDVO;
+import com.cyj.dvo.AttributeValueDVO;
 import com.cyj.dvo.BackgroundGetProductDVO;
 import com.cyj.dvo.BackgroundGetProductDetailDVO;
+import com.cyj.dvo.CategoryDVO;
+import com.cyj.feign.admin.AdminCategoryFeignClient;
 import com.cyj.service.MerchantProductManagementService;
-import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/merchant/product/")
@@ -19,6 +24,28 @@ public class MerchantProductManagementController {
 
     @Autowired
     private MerchantProductManagementService productManagementService;
+
+    @Autowired
+    private AdminCategoryFeignClient adminCategoryFeignClient;
+
+
+    @PreAuthorize("hasAuthority('Merchant')")
+    @GetMapping("/getCategory")
+    public Result<List<CategoryDVO>> getCategory() {
+        return adminCategoryFeignClient.getCategory();
+    }
+
+    @PreAuthorize("hasAuthority('Merchant')")
+    @GetMapping("/getAttribute")
+    public Result<List<AttributeDVO>> getAttribute() {
+        return adminCategoryFeignClient.getAttribute();
+    }
+
+    @PreAuthorize("hasAuthority('Merchant')")
+    @GetMapping("/getAttributeValue/{id}")
+    public Result<List<AttributeValueDVO>> getAttributeValue(@PathVariable("id") Integer id) {
+        return adminCategoryFeignClient.getAttributeValue(id);
+    }
 
     /**
      * 获取商品列表
@@ -105,10 +132,11 @@ public class MerchantProductManagementController {
      * 商品上架|下架
      */
     @Log(module = "商品", desc = "上下架商品")
-    @PreAuthorize("hasAuthority('Merchant')")
+    @PreAuthorize("hasAnyAuthority('Merchant','system')")
     @PutMapping("/setStatus")
-    public Result<String> setStatus(Integer productId) {
-        return productManagementService.setStatus(productId);
+    public Result<String> setStatus(@RequestParam("productId") Integer productId,
+                                    @RequestParam(value = "status", required = false) Integer status) {
+        return productManagementService.setStatus(productId, status);
     }
     /**
      * 商品删除

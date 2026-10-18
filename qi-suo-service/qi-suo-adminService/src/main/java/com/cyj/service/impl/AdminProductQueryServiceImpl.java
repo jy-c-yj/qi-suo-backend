@@ -34,4 +34,12 @@ public class AdminProductQueryServiceImpl implements AdminProductQueryService {
     public Result<BackgroundGetProductDetailDVO> getProductDetail(Integer id) {
         return merchantProductQueryFeignClient.getProductDetail(id);
     }
+
+    @Override
+    public Result<String> setStatus(Integer id, Integer status) {
+        if (id == null || status == null || (status != 0 && status != 1)) {
+            return Result.error("参数不合法");
+        }
+        return merchantProductQueryFeignClient.setStatus(id, status);
+    }
 }

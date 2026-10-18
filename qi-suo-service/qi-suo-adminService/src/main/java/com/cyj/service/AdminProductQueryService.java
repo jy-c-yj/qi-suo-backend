@@ -25,4 +25,12 @@ public interface AdminProductQueryService {
      * @return
      */
     Result<BackgroundGetProductDetailDVO> getProductDetail(Integer id);
+
+    /**
+     * 启用/禁用商品（转发到商家服务显式设置状态）
+     *
+     * @param id     商品 id
+     * @param status 1=上架，0=下架
+     */
+    Result<String> setStatus(Integer id, Integer status);
 }

@@ -28,13 +28,13 @@
         <if test="category.name != null and category.name != ''">
             AND c.name LIKE CONCAT('%', #{category.name}, '%')
         </if>
-        <if test="category.categoryType != null and category.categoryType != ''">
+        <if test="category.categoryType != null">
             AND c.category_type = #{category.categoryType}
         </if>
-        <if test="category.isActive != null and category.isActive != ''">
+        <if test="category.isActive != null">
             AND c.is_active = #{category.isActive}
         </if>
-        <if test="category.level != null and category.level != ''">
+        <if test="category.level != null">
             AND c.level = #{category.level}
         </if>
         ORDER BY c.sort_order , c.created_at DESC

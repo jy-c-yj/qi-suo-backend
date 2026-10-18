@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 1234
+    url: jdbc:mysql://127.0.0.1:3306/qi-suo?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+    druid:
+       initial-size: 5
+       min-idle: 5
+       max-active: 20
+       max-wait: 60000
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.cyj.entity
+  global-config:
+    db-config:
+      id-type: auto
+    banner: false
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+    local-cache-scope: session
+    call-setters-on-nulls: true
+    auto-mapping-behavior: full
+
+logging:
+  level:
+    com.cyj.mapper: debug
+    java.sql: debug
+ 

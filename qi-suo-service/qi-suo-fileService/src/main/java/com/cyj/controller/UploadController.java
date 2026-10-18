@@ -46,12 +46,19 @@ public class UploadController {
             case "jpg":
             case "jpeg":
                 extension = "image/jpeg";
+                break;
             case "png":
                 extension = "image/png";
+                break;
+            default:
+                break;
         }
         ObjectWriteResponse objectWriteResponse = MinIOUtils.uploadFile("qisuo", file, fileName, extension);
         String fileUrl = MinIOUtils.getBasisUrl()+fileName;
-        return Result.success(fileUrl);
+        // URL 要放进 data：Result.success(String) 重载会把值塞进 msg，所以这里手工塞 data
+        Result<String> result = Result.success();
+        result.setData(fileUrl);
+        return result;
 
     }
 }

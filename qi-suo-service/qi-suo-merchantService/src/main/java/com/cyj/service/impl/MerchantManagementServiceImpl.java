@@ -35,9 +35,6 @@ public class MerchantManagementServiceImpl implements MerchantManagementService 
         //查询数据库
         Page<Merchant> page = new Page<>(adminMerchantListSelectConditionDTO.getPageNum(), adminMerchantListSelectConditionDTO.getPageSize());
         List<AdminMerchantManagementLDVO> merchantList = merchantMapper.list(page, adminMerchantListSelectConditionDTO);
-        if(merchantList.isEmpty()){
-            return Result.error("商户列表为空");
-        }
         pageResult.setTotal(page.getTotal());
         pageResult.setRows(merchantList);
 

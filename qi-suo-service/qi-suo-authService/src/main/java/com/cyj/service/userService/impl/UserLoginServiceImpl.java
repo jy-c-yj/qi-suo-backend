@@ -72,6 +72,8 @@ public class UserLoginServiceImpl implements UserService {
         AccessTokenDVO accessTokenDVO = AccessTokenDVO.builder()
                 .access_token(accessToken)
                 .refresh_token_key(key)
+                .id(user.getId())
+                .roles(roles)
                 .build();
 
         //将用户信息存入缓存

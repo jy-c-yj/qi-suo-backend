@@ -5,22 +5,24 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyj.common.PageResult;
 import com.cyj.common.Result;
-import com.cyj.constant.RedissonKey;
+import com.cyj.constants.RoleConstants;
 import com.cyj.dto.AdminDTO;
 import com.cyj.dto.NewAdminDTO;
 import com.cyj.dvo.AdminDVO;
 import com.cyj.entity.Admin;
 import com.cyj.mapper.AdminMapper;
 import com.cyj.service.AdminManagementService;
-import com.cyj.utils.RedissonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -28,49 +30,77 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     @Autowired
     private AdminMapper adminMapper;
     @Autowired
-    private RedissonUtil redissonUtil;
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
     /**
-     * 查询
-     * @return
+     * 当前操作者信息
+     */
+    private static final class OperatorInfo {
+        private final String name;
+        private final int type;
+        private final Long adminId;
+
+        private OperatorInfo(String name, int type, Long adminId) {
+            this.name = name;
+            this.type = type;
+            this.adminId = adminId;
+        }
+    }
+
+    /**
+     * 取当前操作者：
+     * - 服务间调用（Feign 注入 system，principal 为 -1）按最高级别处理，不再回查管理员表
+     * - 管理员调用按 principal id 查 admin 表，以 admin_type 为准
+     */
+    private OperatorInfo currentOperator() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+        boolean system = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(RoleConstants.SYSTEM::equals);
+        if (system) {
+            return new OperatorInfo(RoleConstants.SYSTEM, 3, -1L);
+        }
+        if (!(authentication.getPrincipal() instanceof Number principal)) {
+            return null;
+        }
+        Admin operator = adminMapper.selectById(principal.longValue());
+        if (operator == null || operator.getAdminType() == null) {
+            return null;
+        }
+        return new OperatorInfo(operator.getUsername(), operator.getAdminType(),
+                operator.getAdminId() == null ? principal.longValue() : operator.getAdminId());
+    }
+
+    /**
+     * 目标是否可被当前操作者管理：系统管理员可管理所有；其他人只能管理平级与下一级
+     */
+    private boolean canManage(OperatorInfo operator, Admin target) {
+        if (target == null || target.getAdminType() == null) {
+            return false;
+        }
+        return operator.type == 3 || target.getAdminType() <= operator.type;
+    }
+
+    /**
+     * 查询：直接查库，禁用（status=0）的管理员也要显示
      */
     @Override
     public Result<PageResult<AdminDVO>> getAdminList(int pageNum, Long pageSize) {
 
-        if(pageNum < 1 || pageSize < 1) {
+        if (pageNum < 1 || pageSize == null || pageSize < 1) {
             return Result.error("查询错误");
         }
-        // 创建分页对象
         Page<Admin> page = new Page<>(pageNum, pageSize);
-        //查找缓存
-        String key = RedissonKey.ADMIN_MANAGEMENT_ADMIN_KEY +"page:"+pageNum;
-       List<AdminDVO> adminDVOList =  redissonUtil.getList(key);
-        //存在直接返回
-        if(adminDVOList != null && !adminDVOList.isEmpty()){
-            PageResult<AdminDVO> pageResult = new PageResult<>();
-            pageResult.setTotal(pageSize);
-            pageResult.setRows(adminDVOList);
-            return Result.success(pageResult);
-        }
-
-        //不存在查询数据库
         QueryWrapper<Admin> adminQueryWrapper = new QueryWrapper<>();
-        adminQueryWrapper.eq("is_deleted",false);
+        adminQueryWrapper.eq("is_deleted", false);
         adminQueryWrapper.orderByDesc("create_time");
         Page<Admin> adminPage = adminMapper.selectPage(page, adminQueryWrapper);
-        List<Admin> adminList = adminPage.getRecords();
-        if(adminList == null || adminList.isEmpty()){
-            return Result.error("分页查询失败");
-        }
 
-
-        //添加缓存
-
-        adminList.forEach(admin -> {
-            if (adminDVOList != null) {
-                adminDVOList.add(AdminDVO.builder()
+        List<AdminDVO> rows = adminPage.getRecords().stream()
+                .map(admin -> AdminDVO.builder()
                         .adminId(admin.getAdminId())
                         .adminName(admin.getUsername())
                         .adminType(admin.getAdminType())
@@ -80,56 +110,62 @@ public class AdminManagementServiceImpl implements AdminManagementService {
                         .status(admin.getStatus())
                         .updateBy(admin.getUpdateBy())
                         .updateTime(admin.getUpdateTime())
-                        .build()
-                );
-            }
-        });
+                        .build())
+                .toList();
 
-        // 封装结果
         PageResult<AdminDVO> pageResult = new PageResult<>();
         pageResult.setTotal(adminPage.getTotal());
-        pageResult.setRows(adminDVOList);
-
-
-        //返回数据
+        pageResult.setRows(rows);
         return Result.success(pageResult);
     }
 
     /**
-     * 新增
-     * @param newAdminDTO
-     * @return
+     * 新增：普通管理员不能新增；新管理员级别不高于自己，且不能创建系统管理员（除非自己就是系统管理员）
      */
     @Override
     public Result<AdminDVO> newAdmin(NewAdminDTO newAdminDTO) {
-        //判断数据完整性
-        if(newAdminDTO == null){
+        if (newAdminDTO == null) {
             log.error("数据不完整 ---> newAdminDTO 为 null");
             return Result.error("数据不完整");
         }
-        if(newAdminDTO.getAdminName() == null || newAdminDTO.getAdminName().isEmpty()){
+        if (newAdminDTO.getAdminName() == null || newAdminDTO.getAdminName().isEmpty()) {
             log.error("数据不完整,缺少adminName");
             return Result.error("数据不完整");
         }
-        if(newAdminDTO.getPhone() == null || newAdminDTO.getPhone().isEmpty()){
+        if (newAdminDTO.getPhone() == null || newAdminDTO.getPhone().isEmpty()) {
             log.error("数据不完整,缺少Phone");
             return Result.error("数据不完整");
         }
-        if(newAdminDTO.getPassword() == null || newAdminDTO.getPassword().isEmpty()){
+        if (newAdminDTO.getPassword() == null || newAdminDTO.getPassword().isEmpty()) {
             log.error("数据不完整,缺少Password");
             return Result.error("数据不完整");
         }
-        //判断管理员名是否重复
-        QueryWrapper<Admin> adminQueryWrapper = new QueryWrapper<>();
-        adminQueryWrapper.eq("username",newAdminDTO.getAdminName());
-        Admin admin = adminMapper.selectOne(adminQueryWrapper);
+        if (newAdminDTO.getAdminType() == null
+                || newAdminDTO.getAdminType() < 1 || newAdminDTO.getAdminType() > 3) {
+            return Result.error("管理员级别不合法");
+        }
 
-        //重复返回错误
-        if(admin != null){
+        OperatorInfo operator = currentOperator();
+        if (operator == null) {
+            return Result.error("获取当前管理员失败");
+        }
+        if (operator.type < 2) {
+            return Result.error("权限不足");
+        }
+        if (newAdminDTO.getAdminType() > operator.type) {
+            return Result.error("权限不足");
+        }
+        if (newAdminDTO.getAdminType() == 3 && operator.type != 3) {
+            return Result.error("权限不足");
+        }
+
+        QueryWrapper<Admin> adminQueryWrapper = new QueryWrapper<>();
+        adminQueryWrapper.eq("username", newAdminDTO.getAdminName());
+        Admin admin = adminMapper.selectOne(adminQueryWrapper);
+        if (admin != null) {
             return Result.error("该管理员已存在");
         }
 
-        //不重复插入数据库
         Admin newAdmin = new Admin();
         newAdmin.setUsername(newAdminDTO.getAdminName());
         newAdmin.setPassword(passwordEncoder.encode(newAdminDTO.getPassword()));
@@ -137,21 +173,13 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         newAdmin.setAdminType(newAdminDTO.getAdminType());
         newAdmin.setPhone(newAdminDTO.getPhone());
         newAdmin.setIsDeleted(0);
-
         newAdmin.setCreateTime(LocalDateTime.now());
-
         newAdmin.setUpdateTime(LocalDateTime.now());
-        //查询创建者
-        Admin cAdmin = adminMapper.selectById(SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
-
-        newAdmin.setCreateBy(cAdmin.getUsername());
-        newAdmin.setUpdateBy(cAdmin.getUsername());
+        newAdmin.setCreateBy(operator.name);
+        newAdmin.setUpdateBy(operator.name);
         adminMapper.insert(newAdmin);
-        //更新\删除缓存
-        redissonUtil.deleteByPattern(RedissonKey.ADMIN_MANAGEMENT_ADMIN_KEY +"page:*");
-//        List<AdminDVO> adminDVOList = redissonUtil.getList(RedissonKey.ADMIN_MANAGEMENT_ADMIN_KEY);
-//
-        AdminDVO adminDVO = AdminDVO.builder()
+
+        return Result.success(AdminDVO.builder()
                 .adminId(newAdmin.getAdminId())
                 .adminName(newAdmin.getUsername())
                 .adminType(newAdmin.getAdminType())
@@ -161,226 +189,155 @@ public class AdminManagementServiceImpl implements AdminManagementService {
                 .status(newAdmin.getStatus())
                 .updateBy(newAdmin.getUpdateBy())
                 .updateTime(newAdmin.getUpdateTime())
-                .build();
-//
-//        if(adminDVOList != null && !adminDVOList.isEmpty()){
-//            adminDVOList.add(adminDVO);
-//        }
-
-        return Result.success(adminDVO);
+                .build());
     }
 
-    /**
-     * 设为启用
-     * @param adminId
-     * @return
-     */
     @Override
-    public Result<Boolean> setAdminIsEnabled(Long adminId,Integer pageNum) {
-            return setAdminStatus(adminId,1,pageNum);
+    public Result<Boolean> setAdminIsEnabled(Long adminId, Integer pageNum) {
+        return setAdminStatus(adminId, 1);
     }
 
-    /**
-     * 设为禁用
-     * @param adminId
-     * @return
-     */
     @Override
-    public Result<Boolean> setAdminNotEnabled(Long adminId,Integer pageNum) {
-        return setAdminStatus(adminId,0,pageNum);
+    public Result<Boolean> setAdminNotEnabled(Long adminId, Integer pageNum) {
+        return setAdminStatus(adminId, 0);
     }
 
-    /**
-     * 设置admin状态
-     * @param adminId
-     * @param status
-     * @return
-     */
-    private Result<Boolean> setAdminStatus(Long adminId, Integer status,Integer pageNum) {
-        //查询数据库
-        Admin admin = adminMapper.selectById(adminId);
-        if(admin == null){
-            return  Result.error("未查询到此用户 -->" + adminId);
+    private Result<Boolean> setAdminStatus(Long adminId, Integer status) {
+        OperatorInfo operator = currentOperator();
+        if (operator == null) {
+            return Result.error("获取当前管理员失败");
         }
-        //更新状态
-
-        admin.setStatus(status);
-        admin.setUpdateTime(LocalDateTime.now());
-        //查找更新人
-        Admin admin1 = adminMapper.selectById(SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
-        admin.setUpdateBy(admin1.getUsername());
-        //判断权限
-        if(admin1.getAdminType() <= admin.getAdminType()){
+        Admin admin = adminMapper.selectById(adminId);
+        if (admin == null) {
+            return Result.error("未查询到此用户 -->" + adminId);
+        }
+        // 不能启停自己
+        if (Objects.equals(admin.getAdminId(), operator.adminId)) {
+            return Result.error("不能修改自己的状态");
+        }
+        if (!canManage(operator, admin)) {
             return Result.error("权限不足");
         }
-        //更新数据库
-        adminMapper.updateById(admin);
-        //更新缓存
-        List<AdminDVO> adminDVOList = redissonUtil.getList(RedissonKey.ADMIN_MANAGEMENT_ADMIN_KEY +"page:"+pageNum);
-        for(int i = 0; i < adminDVOList.size(); i++){
-            AdminDVO adminDVO = adminDVOList.get(i);
-            if(adminDVO.getAdminId().equals(adminId)){
-                adminDVOList.set(i,AdminDVO.builder()
-                        .adminId(adminId)
-                        .adminName(admin.getUsername())
-                        .status(status)
-                        .phone(admin.getPhone())
-                        .adminType(admin.getAdminType())
-                        .createBy(admin.getCreateBy())
-                        .createTime(admin.getCreateTime())
-                        .updateBy(admin.getUpdateBy())
-                        .updateTime(admin.getUpdateTime())
-                        .build());
-            }
+        // 系统管理员只能由系统管理员操作（非系统操作者已在 canManage 中拦下）
+        if (admin.getAdminType() != null && admin.getAdminType() == 3 && operator.type != 3) {
+            return Result.error("权限不足");
         }
+
+        Admin update = new Admin();
+        update.setAdminId(adminId);
+        update.setStatus(status);
+        update.setUpdateTime(LocalDateTime.now());
+        update.setUpdateBy(operator.name);
+        adminMapper.updateById(update);
         return Result.success(true);
     }
 
     /**
-     * 修改admin信息
-     * @param adminDTO
-     * @return
+     * 修改：目标必须可管理；不能修改自己的级别；新级别不高于自己；不能设置成系统管理员（除非自己就是）
      */
     @Override
-    public Result<Boolean> updateAdmin(AdminDTO adminDTO,Integer pageNum) {
+    public Result<Boolean> updateAdmin(AdminDTO adminDTO, Integer pageNum) {
 
-        Admin newAdmin = new Admin();
-
-
-        if(adminDTO.getAdminType() == null && adminDTO.getAdminName() == null && adminDTO.getPhone() == null){
+        if (adminDTO == null) {
+            return Result.error("数据不完整");
+        }
+        if (adminDTO.getAdminType() == null && adminDTO.getAdminName() == null && adminDTO.getPhone() == null) {
             return Result.error("数据不完整,无修改信息");
         }
-
-        //判断数据是否完整
-        if(adminDTO.getAdminId() == null){
+        if (adminDTO.getAdminId() == null) {
             return Result.error("数据不完整,无adminId");
         }
-        newAdmin.setAdminId(adminDTO.getAdminId());
 
-
-        //获取修改者的权限
-//        Collection<? extends GrantedAuthority> l = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
-//        List<String> roles = l.stream().map(GrantedAuthority::getAuthority).toList();
-//        int type = 0;
-//        if(roles.contains(RoleConstants.OrdinaryADMIN)){
-//            type = 1;
-//        }else if (roles.contains(RoleConstants.SuperADMIN)){
-//            type = 2;
-//        } else if (roles.contains(RoleConstants.SystemADMIN)) {
-//            type = 3;
-//        }
-        Admin admin = adminMapper.selectById(SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
-        int type = admin.getAdminType();
-        //查询被修改admin信息
-        Admin updatedAdmin = adminMapper.selectById(adminDTO.getAdminId());
-
-        //判断修改者的权限是否足够修改被修改者
-        if(updatedAdmin.getAdminType() > type){
+        OperatorInfo operator = currentOperator();
+        if (operator == null) {
+            return Result.error("获取当前管理员失败");
+        }
+        Admin target = adminMapper.selectById(adminDTO.getAdminId());
+        if (target == null) {
+            return Result.error("管理员不存在");
+        }
+        if (!canManage(operator, target)) {
+            return Result.error("权限不足");
+        }
+        if (target.getAdminType() != null && target.getAdminType() == 3 && operator.type != 3) {
             return Result.error("权限不足");
         }
 
-        //查询数据库是否重名
-//        if(adminDTO.getAdminName() != null){
-//
-//            //查询数据库是否重名
-//            QueryWrapper<Admin> adminQueryWrapper = new QueryWrapper<>();
-//            adminQueryWrapper.eq("username",adminDTO.getAdminName());
-//            Admin admin_ = adminMapper.selectOne(adminQueryWrapper);
-//            if(admin_ != null){
-//                return Result.error("该用户名重复");
-//            }
-//            newAdmin.setUsername(adminDTO.getAdminName());
-//        }
+        Admin update = new Admin();
+        update.setAdminId(adminDTO.getAdminId());
+        update.setUpdateTime(LocalDateTime.now());
+        update.setUpdateBy(operator.name);
 
-        //判断修改者的权限是否足够设置此等级
-        if(adminDTO.getAdminType() != null){
-            switch (adminDTO.getAdminType()){
-                case 1:
-                    if(type == 1){
-                        return Result.error("权限不足");
-                    }
-                    break;
-                    case 2:
-                        if(type != 3){
-                            return Result.error("权限不足");
-                        }
-                        break;
+        if (adminDTO.getAdminType() != null) {
+            // 不能修改自己的级别
+            if (Objects.equals(target.getAdminId(), operator.adminId)) {
+                return Result.error("不能修改自己的级别");
             }
-            newAdmin.setAdminType(adminDTO.getAdminType());
+            if (adminDTO.getAdminType() < 1 || adminDTO.getAdminType() > 3) {
+                return Result.error("管理员级别不合法");
+            }
+            if (adminDTO.getAdminType() > operator.type) {
+                return Result.error("权限不足");
+            }
+            if (adminDTO.getAdminType() == 3 && operator.type != 3) {
+                return Result.error("权限不足");
+            }
+            update.setAdminType(adminDTO.getAdminType());
         }
 
-        //更新数据库信息
         if (adminDTO.getPhone() != null) {
-            newAdmin.setPhone(adminDTO.getPhone());
+            update.setPhone(adminDTO.getPhone());
         }
 
-        newAdmin.setUpdateTime(LocalDateTime.now());
-        newAdmin.setUpdateBy(admin.getUsername());
-
-        adminMapper.updateById(newAdmin);
-        //更新缓存
-        List<AdminDVO> adminDVOList = redissonUtil.getList(RedissonKey.ADMIN_MANAGEMENT_ADMIN_KEY +"page:"+pageNum);
-        for (int i = 0; i < adminDVOList.size(); i++) {
-            AdminDVO adminDVO = adminDVOList.get(i);
-            if (adminDVO.getAdminId().equals(adminDTO.getAdminId())) {
-                // 直接修改并设置回原位置
-                if (adminDTO.getAdminName() != null) {
-                    adminDVO.setAdminName(adminDTO.getAdminName());
-                }
-                if (adminDTO.getAdminType() != null) {
-                    adminDVO.setAdminType(adminDTO.getAdminType());
-                }
-                if (adminDTO.getPhone() != null) {
-                    adminDVO.setPhone(adminDTO.getPhone());
-                }
-                // 关键：同步到Redis
-                adminDVOList.set(i, adminDVO);
-                break;
-            }
-        }
-
+        adminMapper.updateById(update);
         return Result.success(true);
     }
 
     /**
-     * 删除admin
-     * @param adminId
-     * @return
+     * 删除：仍为逻辑删除，权限按新增同级收紧（系统/超级管理员）
      */
     @Override
     public Result<Boolean> deleteAdmin(Long adminId) {
-        //查询被删除admin信息
-        Admin admin = adminMapper.selectById(adminId);
-        //查询删除者信息
-        Admin admin_ = adminMapper.selectById(SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
-        //判断权限
-        if(admin_.getAdminType() != 3){
-            return Result.error("权限不足，需要系统管理员");
+        OperatorInfo operator = currentOperator();
+        if (operator == null) {
+            return Result.error("获取当前管理员失败");
         }
-        //修改数据库
+        if (operator.type < 2) {
+            return Result.error("权限不足，需要超级管理员或系统管理员");
+        }
+        Admin admin = adminMapper.selectById(adminId);
+        if (admin == null) {
+            return Result.error("管理员不存在");
+        }
+        if (Objects.equals(admin.getAdminId(), operator.adminId)) {
+            return Result.error("不能删除自己");
+        }
+        if (!canManage(operator, admin)) {
+            return Result.error("权限不足");
+        }
+        if (admin.getAdminType() != null && admin.getAdminType() == 3 && operator.type != 3) {
+            return Result.error("权限不足");
+        }
+
         Admin newadmin = new Admin();
         newadmin.setAdminId(adminId);
         newadmin.setIsDeleted(1);
-        newadmin.setUpdateBy(admin_.getUsername());
+        newadmin.setUpdateBy(operator.name);
         newadmin.setUpdateTime(LocalDateTime.now());
         adminMapper.updateById(newadmin);
-        //更新缓存
-        redissonUtil.deleteByPattern(RedissonKey.ADMIN_MANAGEMENT_ADMIN_KEY +"page:*");
         return Result.success(true);
     }
 
     /**
      * 按管理员id取用户名（其他服务需要操作人/审计名时使用）
-     * @param id 管理员id
-     * @return 返回管理员用户名
      */
     @Override
     public Result<String> getAdminNameById(Long id) {
-        if(id == null){
+        if (id == null) {
             return Result.error("管理员id为空");
         }
         Admin admin = adminMapper.selectById(id);
-        if(admin == null){
+        if (admin == null) {
             return Result.error("管理员不存在");
         }
         //管理员名要放进 data：Result.success(String) 重载会把值塞进 msg，所以这里手工塞 data

@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyj.dvo.AdminGetCategoryDVO;
 import com.cyj.entity.Category;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.cyj.entity.HomeBackgroundImage;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -17,6 +16,6 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface CategoryMapper extends BaseMapper<Category> {
-    Page<AdminGetCategoryDVO> getCategoryByCondition(Page<HomeBackgroundImage> page, Category category);
+    Page<AdminGetCategoryDVO> getCategoryByCondition(Page<AdminGetCategoryDVO> page, Category category);
 
 }

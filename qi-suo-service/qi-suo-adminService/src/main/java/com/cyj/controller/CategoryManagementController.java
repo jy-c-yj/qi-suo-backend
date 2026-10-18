@@ -40,28 +40,37 @@ public class CategoryManagementController {
     }
 
     /**
-     * 启用 |禁用
+     * 启用
      */
-    @Log(module = "分类", desc = "启用或禁用分类")
+    @Log(module = "分类", desc = "启用分类")
     @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @PutMapping("/setCategoryEnabled")
     public Result<String> setCategoryEnabled(@RequestParam("id") Long id,@RequestParam int pageNum){
         return categoryManagementService.setCategoryEnabled(id, pageNum);
     }
     /**
-     * 删除
+     * 禁用
+     */
+    @Log(module = "分类", desc = "禁用分类")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
+    @PutMapping("/setCategoryNotEnabled")
+    public Result<String> setCategoryNotEnabled(@RequestParam("id") Long id,@RequestParam int pageNum){
+        return categoryManagementService.setCategoryNotEnabled(id, pageNum);
+    }
+    /**
+     * 删除：只有系统/超级管理员可操作
      */
     @Log(module = "分类", desc = "删除分类")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','system')")
     @DeleteMapping("/deleteCategory/{id}")
     public Result<String> deleteCategory(@PathVariable("id") Integer id){
         return categoryManagementService.deleteCategory(id);
     }
     /**
-     * 新增
+     * 新增：只有系统/超级管理员可操作
      */
     @Log(module = "分类", desc = "新增分类")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','system')")
     @PostMapping("/newCategory")
     public Result<String> newCategory(@RequestBody NewCategoryDTO newCategoryDTO){
         return categoryManagementService.newCategory(newCategoryDTO);

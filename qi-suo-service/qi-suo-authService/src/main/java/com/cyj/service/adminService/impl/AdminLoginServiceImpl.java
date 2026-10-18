@@ -79,6 +79,8 @@ public class AdminLoginServiceImpl implements AdminService {
         AccessTokenDVO accessTokenDVO = AccessTokenDVO.builder()
                 .access_token(accessToken)
                 .refresh_token_key(key)
+                .id(admin.getAdminId())
+                .roles(roles)
                 .build();
 
         //返回访问令牌

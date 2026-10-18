@@ -27,7 +27,7 @@ public class ImageManagementController {
     /**
      * 查询主页背景图片列表
      */
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @GetMapping("/getHomeBackGroundImageList")
     public Result<PageResult<HomeBackgroundImageDVO>> getHomeBackGroundImageList(int pageNum, Long pageSize) {
         return imageManagementService.getHomeBackGroundImageList(pageNum,pageSize);
@@ -36,7 +36,7 @@ public class ImageManagementController {
      * 设置启用
      */
     @Log(module = "图片", desc = "启用主页背景图")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @PutMapping("/setHomeBackGroundImageEnabled")
     public Result<String> setHomeBackGroundImageEnabled(@RequestParam("uid") String imageUid,@RequestParam int pageNum){
         return imageManagementService.setHomeBackGroundImageEnabled(imageUid,pageNum);
@@ -45,7 +45,7 @@ public class ImageManagementController {
      * 设置禁用
      */
     @Log(module = "图片", desc = "禁用主页背景图")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @PutMapping("/setHomeBackGroundImageNotEnabled")
     public Result<String> setHomeBackGroundImageNotEnabled(@RequestParam("uid") String imageUid,@RequestParam int pageNum){
         return imageManagementService.setHomeBackGroundImageNotEnabled(imageUid, pageNum);
@@ -54,7 +54,7 @@ public class ImageManagementController {
      * 新增图片
      */
     @Log(module = "图片", desc = "新增主页背景图")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @PostMapping("/newHomeBackGroundImage")
     public Result<String> newHomeBackGroundImage(@RequestParam MultipartFile file,@RequestParam String description) {
         return imageManagementService.newHomeBackGroundImage(file,description);
@@ -63,7 +63,7 @@ public class ImageManagementController {
      * 删除
      */
     @Log(module = "图片", desc = "删除主页背景图")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @DeleteMapping("/deleteHomeBackGroundImage/{uid}")
     public Result<String> deleteHomeBackGroundImage(@PathVariable("uid") String imageUid){
         return imageManagementService.deleteHomeBackGroundImage(imageUid);
@@ -72,7 +72,7 @@ public class ImageManagementController {
      * 编辑主页背景图片信息
      */
     @Log(module = "图片", desc = "修改主页背景图")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @PutMapping("/updateHomeBackGroundImage")
     public Result<String> updateHomeBackGroundImage(@RequestBody HomeBackgroundImageDVO homeBackgroundImageDVO,@RequestParam int pageNum){
         return imageManagementService.updateHomeBackGroundImage(homeBackgroundImageDVO,pageNum);
@@ -88,7 +88,7 @@ public class ImageManagementController {
      * 取消当前背景图片
      */
     @Log(module = "图片", desc = "删除当前背景图")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @DeleteMapping("/deleteNowHomeBackGroundImage/{uid}")
     public Result<String> deleteNowHomeBackGroundImage(@PathVariable String uid){
         return imageManagementService.deleteNowHomeBackGroundImage(uid);
@@ -97,7 +97,7 @@ public class ImageManagementController {
      *设置已启用图片为当前背景图片
      */
     @Log(module = "图片", desc = "设为当前背景图")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @PatchMapping("/setNowHomeBackGroundImage/{uid}")
     public Result<String> setNowHomeBackGroundImage(@PathVariable String uid){
         return imageManagementService.setNowHomeBackGroundImage(uid);
@@ -116,7 +116,7 @@ public class ImageManagementController {
      * 设置启用
      */
     @Log(module = "图片", desc = "启用轮播图")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @PutMapping("/setCarouselImageEnabled")
     public Result<String> setCarouselImageEnabled(@RequestParam("uid") String imageUid){
         return imageManagementService.setCarouselImageEnabled(imageUid);
@@ -125,7 +125,7 @@ public class ImageManagementController {
      * 设置禁用
      */
     @Log(module = "图片", desc = "禁用轮播图")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @PutMapping("/setCarouselImageNotEnabled")
     public Result<String> setCarouselImageNotEnabled(@RequestParam("uid") String imageUid){
         return imageManagementService.setCarouselImageNotEnabled(imageUid);
@@ -134,7 +134,7 @@ public class ImageManagementController {
      * 新增图片
      */
     @Log(module = "图片", desc = "新增轮播图")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @PostMapping("/newCarouselImage")
     public Result<String> newCarouselImage(@RequestParam MultipartFile file,@RequestParam String description) {
         return imageManagementService.newCarouselImage(file,description);
@@ -143,7 +143,7 @@ public class ImageManagementController {
      * 删除
      */
     @Log(module = "图片", desc = "删除轮播图")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @DeleteMapping("/deleteCarouselImage/{uid}")
     public Result<String> deleteCarouselImage(@PathVariable("uid") String imageUid){
         return imageManagementService.deleteCarouselImage(imageUid);
@@ -152,7 +152,7 @@ public class ImageManagementController {
      * 编辑轮播图片信息
      */
     @Log(module = "图片", desc = "修改轮播图")
-    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin')")
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','OrdinaryAdmin','system')")
     @PutMapping("/updateCarouselImage")
     public Result<String> updateCarouselImage(@RequestBody CarouselImageDetailsDTO carouselImageDetailsDTO) {
         return imageManagementService.updateCarouselImage(carouselImageDetailsDTO);

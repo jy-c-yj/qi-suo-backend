@@ -43,7 +43,11 @@ public class HomeImageServiceImpl implements HomeImageService {
         if(result.getCode() == 1 && result.getData() == null){
             return Result.error("获取轮播图片列表为空");
         }
-        List<String> list = result.getData().stream().map(CarouselImageDVO::getUrl).toList();
+        //首页只展示启用中的轮播图；管理端列表接口仍返回全部，便于重新启用
+        List<String> list = result.getData().stream()
+                .filter(image -> Boolean.TRUE.equals(image.getIsEnabled()))
+                .map(CarouselImageDVO::getUrl)
+                .toList();
 
         return Result.success(list);
     }

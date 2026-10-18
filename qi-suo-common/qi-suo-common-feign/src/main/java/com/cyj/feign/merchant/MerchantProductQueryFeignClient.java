@@ -12,7 +12,9 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * 管理服务 -> 商家服务：后台商品查询
@@ -34,4 +36,11 @@ public interface MerchantProductQueryFeignClient {
      */
     @GetMapping("/api/merchant/product/getProductDetail/{id}")
     Result<BackgroundGetProductDetailDVO> getProductDetail(@PathVariable("id") Integer id);
+
+    /**
+     * 显式设置商品上下架状态：1=上架，0=下架
+     */
+    @PutMapping("/api/merchant/product/setStatus")
+    Result<String> setStatus(@RequestParam("productId") Integer productId,
+                             @RequestParam("status") Integer status);
 }

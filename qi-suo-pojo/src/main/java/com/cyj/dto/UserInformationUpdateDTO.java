@@ -19,7 +19,6 @@ public class UserInformationUpdateDTO implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private String username;
-    private String password;
     private String imageUrl;
     private String phone;
     private String email;
@@ -28,7 +27,6 @@ public class UserInformationUpdateDTO implements Serializable {
             return User.builder()
                     .id(userId)
                     .username(userInformationUpdateDTO.getUsername())
-                    .password(userInformationUpdateDTO.getPassword())
                     .imageUrl(userInformationUpdateDTO.getImageUrl())
                     .phone(userInformationUpdateDTO.getPhone())
                     .email(userInformationUpdateDTO.getEmail())

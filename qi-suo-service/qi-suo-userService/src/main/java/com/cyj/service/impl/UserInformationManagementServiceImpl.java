@@ -3,10 +3,12 @@ package com.cyj.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cyj.common.Result;
 import com.cyj.constant.RedissonKey;
+import com.cyj.dto.ChangePasswordDTO;
 import com.cyj.dto.UserAddressDTO;
 import com.cyj.dto.UserInformationUpdateDTO;
 import com.cyj.dvo.UserAddressDVO;
 import com.cyj.dvo.UserInformationDVO;
+import com.cyj.entity.User;
 import com.cyj.entity.UserAddress;
 import com.cyj.mapper.UserAddressMapper;
 import com.cyj.mapper.UserMapper;
@@ -15,6 +17,7 @@ import com.cyj.utils.RedissonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -39,6 +42,8 @@ public class UserInformationManagementServiceImpl implements UserInformationMana
     private UserAddressMapper userAddressMapper;
     @Autowired
     private RedissonUtil redissonUtil;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     /**
      * 获取用户信息的方法
      */
@@ -58,11 +63,55 @@ public class UserInformationManagementServiceImpl implements UserInformationMana
         //如果缓存中没有，则从数据库中获取
         if(userInformationDVO == null){
             userInformationDVO = UserInformationDVO.toUserInformationDVO(userMapper.selectById(userId));
-            //将用户信息存入缓存
-            redissonUtil.setValue(key, userInformationDVO,7, TimeUnit.DAYS);
+        }
+        //密码永不回传前端（同时覆盖 Redis 中的历史缓存）
+        if (userInformationDVO != null) {
+            userInformationDVO.setPassword(null);
+            redissonUtil.setValue(key, userInformationDVO, 7, TimeUnit.DAYS);
         }
         return Result.success(userInformationDVO);
 
+    }
+
+    @Override
+    public Result<Boolean> changePassword(ChangePasswordDTO changePasswordDTO) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (userId == null) {
+            return Result.error("获取用户id失败，用户不存在");
+        }
+        if (changePasswordDTO == null
+                || changePasswordDTO.getOldPassword() == null || changePasswordDTO.getOldPassword().isBlank()
+                || changePasswordDTO.getNewPassword() == null || changePasswordDTO.getNewPassword().isBlank()) {
+            return Result.error("请输入旧密码和新密码");
+        }
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+        if (!matchesPassword(changePasswordDTO.getOldPassword(), user.getPassword())) {
+            return Result.error("旧密码不正确");
+        }
+        User update = new User();
+        update.setId(userId);
+        update.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
+        userMapper.updateById(update);
+        // 旧缓存里可能带密码，直接删除
+        redissonUtil.delete(RedissonKey.INFORMATION_USER_KEY + userId);
+        return Result.success(true);
+    }
+
+    /**
+     * 兼容有 {id} 前缀的加密密码与历史明文密码
+     */
+    private boolean matchesPassword(String rawPassword, String storedPassword) {
+        if (storedPassword == null) {
+            return false;
+        }
+        try {
+            return passwordEncoder.matches(rawPassword, storedPassword);
+        } catch (IllegalArgumentException e) {
+            return storedPassword.equals(rawPassword);
+        }
     }
 
     @Override

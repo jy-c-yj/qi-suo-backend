@@ -40,4 +40,14 @@ public class AdminProductManagementController {
         return productManagementService.getProductDetail(id);
     }
 
+    /**
+     * 启用/禁用商品：显式传方向，避免再依赖 toggle
+     */
+    @PreAuthorize("hasAnyAuthority('SystemADMIN','SuperAdmin','system')")
+    @PutMapping("/status")
+    public Result<String> setStatus(@RequestParam("id") Integer id,
+                                    @RequestParam("status") Integer status) {
+        return productManagementService.setStatus(id, status);
+    }
+
 }

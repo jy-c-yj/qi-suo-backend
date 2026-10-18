@@ -1,0 +1,29 @@
+ spring:
+   cloud:
+     openfeign:
+       client:
+         config:
+           qi-suo-file:
+             read-timeout: 2000
+             connect-timeout: 2000
+             logger-level: full
+             retryer: feign.Retryer.Default
+           qi-suo-admin:
+             read-timeout: 2000
+             connect-timeout: 2000
+             logger-level: full
+             retryer: feign.Retryer.Default
+
+ qi-suo:
+   order:
+     timeout: 15m
+     timeout-consumer-enabled: true
+     sweep-enabled: true
+     sweep-interval-ms: 60000
+     sweep-batch-size: 200
+     consumer-concurrency: 1
+     consumer-prefetch: 1
+
+ logging:
+   level:
+     com.cyj.feign.ProductFeignClient: debug

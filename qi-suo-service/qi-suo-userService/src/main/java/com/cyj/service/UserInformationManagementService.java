@@ -1,6 +1,7 @@
 package com.cyj.service;
 
 import com.cyj.common.Result;
+import com.cyj.dto.ChangePasswordDTO;
 import com.cyj.dto.UserAddressDTO;
 import com.cyj.dto.UserInformationUpdateDTO;
 import com.cyj.dvo.UserAddressDVO;
@@ -15,6 +16,11 @@ public interface UserInformationManagementService {
     Result<UserInformationDVO> getUserInformation();
 
     Result<Boolean> updateUserInformation(UserInformationUpdateDTO userInformationUpdateDTO);
+
+    /**
+     * 修改密码
+     */
+    Result<Boolean> changePassword(ChangePasswordDTO changePasswordDTO);
 
     Result<Boolean> addUserAddress(UserAddressDTO userAddressDTO);
 

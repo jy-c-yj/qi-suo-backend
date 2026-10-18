@@ -63,6 +63,16 @@ public class NewProductDTO implements Serializable {
     private BigDecimal originalPrice;
 
     /**
+     * 是否热销
+     */
+    private Boolean isHot;
+
+    /**
+     * 是否新品
+     */
+    private Boolean isNew;
+
+    /**
      * 设置分类
      */
     private List<Integer> categoryIds;

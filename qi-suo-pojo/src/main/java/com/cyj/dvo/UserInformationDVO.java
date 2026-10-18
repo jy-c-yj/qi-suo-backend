@@ -35,7 +35,6 @@ public class UserInformationDVO implements Serializable {
         return UserInformationDVO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
-                .password(user.getPassword())
                 .imageUrl(user.getImageUrl())
                 .phone(user.getPhone())
                 .email(user.getEmail())

@@ -127,9 +127,19 @@ public class BackgroundGetProductDetailDVO implements Serializable {
     private List<String> categoryNames;
 
     /**
+     * 分类ID列表（用于详情内联编辑时做差量增删）
+     */
+    private List<Integer> categoryIds;
+
+    /**
      * 属性名称and属性值
      */
     private List<AttributeAndValue> attributeAndValues;
+
+    /**
+     * 属性值ID列表（用于详情内联编辑时做差量增删）
+     */
+    private List<Integer> attributeValueIds;
 
     private LocalDateTime createdAt;
 

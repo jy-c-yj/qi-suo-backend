@@ -49,6 +49,11 @@ public class BackgroundGetProductByConditionDTO implements Serializable {
     @TableField("sku")
     private String sku;
 
+    /**
+     * 商品状态：1-上架，0-下架
+     */
+    private Integer status;
+
     Integer pageNum;
 
     Integer pageSize;

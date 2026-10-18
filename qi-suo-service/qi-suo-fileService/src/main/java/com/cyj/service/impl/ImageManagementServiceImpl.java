@@ -60,6 +60,12 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         List<String> roles = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
+        // 服务间调用（Feign 注入 system，principal 固定为 -1）：无需回查管理员表
+        if (roles.contains(RoleConstants.SYSTEM)) {
+            Result<String> systemResult = Result.success();
+            systemResult.setData(RoleConstants.SYSTEM);
+            return systemResult;
+        }
         if (!roles.contains(RoleConstants.OrdinaryADMIN)
                 && !roles.contains(RoleConstants.SuperADMIN)
                 && !roles.contains(RoleConstants.SystemADMIN)) {
@@ -94,11 +100,18 @@ public class ImageManagementServiceImpl implements ImageManagementService {
                 case "jpg":
                 case "jpeg":
                     extension = "image/jpeg";
+                    break;
                 case "png":
                     extension = "image/png";
+                    break;
+                default:
+                    break;
             }
             MinIOUtils.uploadFile("qisuo", file, fileName, extension);
-            return Result.success(MinIOUtils.getBasisUrl() + fileName);
+            // URL 要放进 data：Result.success(String) 重载会把值塞进 msg，所以这里手工塞 data
+            Result<String> result = Result.success();
+            result.setData(MinIOUtils.getBasisUrl() + fileName);
+            return result;
         } catch (Exception e) {
             return Result.error("文件上传失败");
         }
@@ -106,27 +119,14 @@ public class ImageManagementServiceImpl implements ImageManagementService {
 
     @Override
     public Result<List<CarouselImageDVO>> getCarouselImageList() {
-        //查询redis
-        String key = RedissonKey.IMAGE_CAROUSEL_KEY;
-        List<CarouselImageDVO> carouselImageDVOList = redissonUtil.getList(key);
-
-        //存在缓存直接返回
-
-        if(!carouselImageDVOList.isEmpty()){
-            return Result.success(carouselImageDVOList);
-        }
-
-        //不存在查询数据库
+        //直接查库，保证启用/禁用、删除后列表立即正确
         QueryWrapper<CarouselImage> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("is_deleted",false);
-        List<CarouselImage> liscarouselImagList = carouselImageMapper.selectList(queryWrapper);
+        queryWrapper.eq("is_deleted", false);
+        queryWrapper.orderByDesc("id");
+        List<CarouselImage> carouselImageList = carouselImageMapper.selectList(queryWrapper);
 
-
-
-        //查询成功存入缓存
-        if (!liscarouselImagList.isEmpty()) {
-            liscarouselImagList.forEach(image -> {
-                CarouselImageDVO carouselImageDVO = CarouselImageDVO.builder()
+        List<CarouselImageDVO> resultList = carouselImageList.stream()
+                .map(image -> CarouselImageDVO.builder()
                         .id(image.getId())
                         .uid(image.getUid())
                         .url(image.getUrl())
@@ -136,12 +136,14 @@ public class ImageManagementServiceImpl implements ImageManagementService {
                         .createdBy(image.getCreatedBy())
                         .modifiedTime(image.getModifiedTime())
                         .modifiedBy(image.getModifiedBy())
-                        .build();
-                redissonUtil.addToList(RedissonKey.IMAGE_CAROUSEL_KEY, carouselImageDVO);
-            });
-        }
+                        .build())
+                .toList();
 
-        return Result.success(carouselImageDVOList);
+        //同步刷新缓存，保持原有缓存结构
+        redissonUtil.delete(RedissonKey.IMAGE_CAROUSEL_KEY);
+        resultList.forEach(dvo -> redissonUtil.addToList(RedissonKey.IMAGE_CAROUSEL_KEY, dvo));
+
+        return Result.success(resultList);
     }
 
     /**
@@ -410,46 +412,29 @@ public class ImageManagementServiceImpl implements ImageManagementService {
      */
     @Override
     public Result<PageResult<HomeBackgroundImageDVO>> getHomeBackGroundImageList(int pageNum,Long pageSize) {
-        //查询缓存
-        String key = RedissonKey.IMAGE_HOMEBACKGROUND_KEY+"page:"+pageNum;
-        List<HomeBackgroundImageDVO> homeBackGroundImageDVOList = redissonUtil.getList(key);
-
-        //存在直接返回
-        if(!homeBackGroundImageDVOList.isEmpty()){
-            PageResult<HomeBackgroundImageDVO> pageResult = new PageResult<>();
-            pageResult.setRows(homeBackGroundImageDVOList);
-            pageResult.setTotal((long) homeBackGroundImageDVOList.size());
-            return Result.success(pageResult);
-        }
-
-        //不存在查询数据库
+        //直接查库：原实现缓存未命中时返回空列表且 total 与分页不一致
         Page<HomeBackgroundImage> page = new Page<>(pageNum, pageSize);
         QueryWrapper<HomeBackgroundImage> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("is_deleted",false);
         queryWrapper.orderByDesc("id");
-     //   List<HomeBackgroundImage> homeBackgroundImageList = homeBackgroundImageMapper.selectList(queryWrapper);
         Page<HomeBackgroundImage> homeBackgroundImagePage = homeBackgroundImageMapper.selectPage(page, queryWrapper);
-        List<HomeBackgroundImage> homeBackgroundImageList = homeBackgroundImagePage.getRecords();
-        Long total = homeBackgroundImagePage.getTotal();
 
-        //查询成功存入缓存
-        homeBackgroundImageList.forEach(image -> {
-            redissonUtil.addToList(key, HomeBackgroundImageDVO.builder()
-                    .id(image.getId())
-                    .url(image.getUrl())
-                    .uid(image.getUid())
-                    .isEnabled(image.getIsEnabled())
-                    .isDeleted(image.getIsDeleted())
-                    .createdTime(image.getCreatedTime())
-                    .updatedTime(image.getUpdatedTime())
-                    .description(image.getDescription())
-                    .build());
-        });
+        List<HomeBackgroundImageDVO> rows = homeBackgroundImagePage.getRecords().stream()
+                .map(image -> HomeBackgroundImageDVO.builder()
+                        .id(image.getId())
+                        .url(image.getUrl())
+                        .uid(image.getUid())
+                        .isEnabled(image.getIsEnabled())
+                        .isDeleted(image.getIsDeleted())
+                        .createdTime(image.getCreatedTime())
+                        .updatedTime(image.getUpdatedTime())
+                        .description(image.getDescription())
+                        .build())
+                .toList();
 
-        //构建返回值
         PageResult<HomeBackgroundImageDVO> pageResult = new PageResult<>();
-        pageResult.setRows(homeBackGroundImageDVOList);
-        pageResult.setTotal(total);
+        pageResult.setRows(rows);
+        pageResult.setTotal(homeBackgroundImagePage.getTotal());
 
         return Result.success(pageResult);
     }
@@ -487,18 +472,8 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         homeBackgroundImage.setUpdatedTime(LocalDateTime.now());
         homeBackgroundImageMapper.update(homeBackgroundImage, queryWrapper);
 
-        String key = RedissonKey.IMAGE_HOMEBACKGROUND_KEY+"page:"+pageNum;
-        //获取缓存
-        List<HomeBackgroundImageDVO> homeBackgroundImageDVOList = redissonUtil.getList(key);
-
-        for (int i = 0; i < homeBackgroundImageDVOList.size(); i++) {
-                HomeBackgroundImageDVO homeBackgroundImageDVO = homeBackgroundImageDVOList.get(i);
-                if(homeBackgroundImageDVO.getUid().equals(imageUid)){
-                    homeBackgroundImageDVO.setIsEnabled(isEnabled);
-                    homeBackgroundImageDVO.setUpdatedTime(homeBackgroundImage.getUpdatedTime());
-                    homeBackgroundImageDVOList.set(i, homeBackgroundImageDVO);
-                }
-        }
+        //列表改为直接查库，这里只需清掉历史分页缓存
+        redissonUtil.deleteByPattern(RedissonKey.IMAGE_HOMEBACKGROUND_KEY + "page:*");
         return Result.success("设置成功");
     }
 
@@ -513,7 +488,7 @@ public class ImageManagementServiceImpl implements ImageManagementService {
 
         Result<String> result = uploadToMinio(file);
         if(result.getCode() == 0){
-            return Result.error(description);
+            return Result.error(result.getMsg());
         }
         String url = result.getData();
 
@@ -575,16 +550,8 @@ public class ImageManagementServiceImpl implements ImageManagementService {
         homeBackgroundImage.setCreatedTime(LocalDateTime.now());
         homeBackgroundImageMapper.updateById(homeBackgroundImage);
 
-
-        //更新缓存
-        List<HomeBackgroundImageDVO> list = redissonUtil.getList(RedissonKey.IMAGE_HOMEBACKGROUND_KEY+"page:"+pageNum);
-
-        for (int i = 0; i < list.size(); i++) {
-            HomeBackgroundImageDVO homeBackgroundImageDVO1 = list.get(i);
-            if(homeBackgroundImageDVO1.getUid().equals(homeBackgroundImageDVO.getUid())){
-                list.set(i, homeBackgroundImageDVO);
-            }
-        }
+        //列表改为直接查库，这里只需清掉历史分页缓存
+        redissonUtil.deleteByPattern(RedissonKey.IMAGE_HOMEBACKGROUND_KEY + "page:*");
 
         return Result.success("编辑成功");
     }

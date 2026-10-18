@@ -63,4 +63,14 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <!-- 可执行 jar：java -jar 需要 Main-Class/Start-Class 清单 -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>

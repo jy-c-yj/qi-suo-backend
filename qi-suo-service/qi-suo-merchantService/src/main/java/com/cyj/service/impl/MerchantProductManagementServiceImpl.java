@@ -143,6 +143,18 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
         if(merchantUpdateProductFormDTO.getOriginalPrice() != null ){
             product.setOriginalPrice(merchantUpdateProductFormDTO.getOriginalPrice());
         }
+        if(merchantUpdateProductFormDTO.getIsNew() != null){
+            product.setIsNew(merchantUpdateProductFormDTO.getIsNew());
+        }
+        if(merchantUpdateProductFormDTO.getIsHot() != null){
+            product.setIsHot(merchantUpdateProductFormDTO.getIsHot());
+        }
+        // 图片只在明确传入非空值时覆盖，避免详情页其它字段保存时清空图片
+        if(merchantUpdateProductFormDTO.getProductImageUrl() != null
+                && !merchantUpdateProductFormDTO.getProductImageUrl().isBlank()){
+            product.setProductImageUrl(merchantUpdateProductFormDTO.getProductImageUrl());
+        }
+        product.setUpdatedAt(LocalDateTime.now());
         try {
             productMapper.updateById(product);
         }catch (Exception e){
@@ -177,6 +189,11 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
         product.setOriginalPrice(newProductDTO.getOriginalPrice());
         product.setPrice(newProductDTO.getPrice());
         product.setProductImageUrl(newProductDTO.getProductImageUrl());
+        product.setIsNew(newProductDTO.getIsNew() != null && newProductDTO.getIsNew());
+        product.setIsHot(newProductDTO.getIsHot() != null && newProductDTO.getIsHot());
+        // 新商品默认上架
+        product.setStatus((byte) 1);
+        product.setIsDeleted(false);
 
         String SKU = SkuUtil.generateBySequence();
         product.setSku(SKU);
@@ -241,7 +258,7 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
         } catch (Exception e) {
             // 处理其他异常
             log.error("新增商品分类失败", e);
-            return Result.error("新增分类失败：" + e.getMessage());
+            return Result.error("新增商品分类失败，请稍后重试");
         }
 
     }
@@ -274,6 +291,12 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
         if(newProductAttributeValueDTO == null){
             return Result.error("新增属性失败");
         }
+        if(newProductAttributeValueDTO.getProductId() == null){
+            return Result.error("商品ID不能为空");
+        }
+        if(newProductAttributeValueDTO.getAttributeValueId() == null){
+            return Result.error("请选择要添加的属性值");
+        }
         ProductAttributeValue productAttributeValue = new ProductAttributeValue();
         productAttributeValue.setProductId(newProductAttributeValueDTO.getProductId());
         productAttributeValue.setAttribute_valueId(newProductAttributeValueDTO.getAttributeValueId());
@@ -294,7 +317,7 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
             log.error("新增商品属性值失败：productId={}, attributeValueId={}",
                     newProductAttributeValueDTO.getProductId(),
                     newProductAttributeValueDTO.getAttributeValueId(), e);
-            return Result.error("新增属性失败：" + e.getMessage());
+            return Result.error("新增属性值失败，请稍后重试");
         }
 
     }
@@ -322,7 +345,7 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
      * @return
      */
     @Override
-    public Result<String> setStatus(Integer productId) {
+    public Result<String> setStatus(Integer productId, Integer status) {
         if(productId==null){
             return Result.error("设置失败状态异常");
         }
@@ -331,11 +354,18 @@ public class MerchantProductManagementServiceImpl implements MerchantProductMana
         if(product==null){
             return Result.error("商品不存在");
         }
-        if(product.getStatus()==1){
+        if (status != null) {
+            // 显式方向：1=上架，0=下架
+            if (status != 0 && status != 1) {
+                return Result.error("状态值不合法");
+            }
+            product.setStatus(status.byteValue());
+        } else if(product.getStatus() != null && product.getStatus() == 1){
             product.setStatus((byte) 0);
         }else {
             product.setStatus((byte) 1);
         }
+        product.setUpdatedAt(LocalDateTime.now());
         //更新数据
         productMapper.updateById(product);
         //删除缓存
