@@ -69,7 +69,7 @@ public class MinIOUtils {
      * 获取上传文件前缀路径
      */
     public static String getBasisUrl() {
-        return endpoint + SEPARATOR + bucketName + SEPARATOR;
+        return fileHost + SEPARATOR + bucketName + SEPARATOR;
     }
 
     /******************************  Operate Bucket Start  ******************************/

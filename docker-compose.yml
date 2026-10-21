@@ -1,0 +1,331 @@
+# ============================================================================
+# 栖所 qi-suo · 本地一键启动
+#
+# 用法（在仓库根目录）：
+#   docker compose up -d
+#   docker compose ps
+#   docker compose logs -f gateway
+#   docker compose down            # 停止，保留数据卷
+#   docker compose down -v         # 停止并删除数据（MySQL/Redis/RabbitMQ/MinIO 都会重置）
+# ============================================================================
+
+name: qi-suo
+
+# ---------------------------------------------------------------------------
+# 公共片段
+# ---------------------------------------------------------------------------
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-service-common: &service-common
+  restart: unless-stopped
+  logging: *default-logging
+  networks:
+    - qi-suo-net
+
+# Java 服务共用环境变量。
+x-service-env: &service-env
+  TZ: Asia/Shanghai
+  JAVA_TOOL_OPTIONS: "-Xms128m -Xmx512m -Duser.timezone=Asia/Shanghai"
+
+  SPRING_PROFILES_ACTIVE: dev
+  NACOS_SERVER_ADDR: "${NACOS_SERVER_ADDR:-nacos:8848}"
+  # Nacos 里实际建的是 prod 命名空间（8 份配置）；dev 命名空间不存在。
+  NACOS_NAMESPACE: "${NACOS_NAMESPACE:-prod}"
+  NACOS_USERNAME: nacos
+  NACOS_PASSWORD: nacos
+
+  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/qi-suo?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8&allowPublicKeyRetrieval=true"
+  SPRING_DATASOURCE_USERNAME: root
+  SPRING_DATASOURCE_PASSWORD: "1234"
+
+  SPRING_DATA_REDIS_HOST: redis
+  SPRING_DATA_REDIS_PORT: "6379"
+
+  SPRING_RABBITMQ_HOST: rabbitmq
+  SPRING_RABBITMQ_PORT: "5672"
+  SPRING_RABBITMQ_VIRTUAL_HOST: qi-suo
+  SPRING_RABBITMQ_USERNAME: cyj
+  SPRING_RABBITMQ_PASSWORD: "12345"
+
+
+  # minio.endpoint 会被拼进返回给浏览器的图片地址，必须是宿主机 LAN IP
+  # （容器内和浏览器都能访问）；不能写 minio:9000，浏览器解析不了服务名。
+  MINIO_ENDPOINT: "http://${MINIO_PUBLIC_HOST:-minio}:9000"
+  MINIO_FILEHOST: "http://${MINIO_PUBLIC_HOST:-8.148.246.43}:9000"
+  MINIO_BUCKETNAME: qisuo
+  MINIO_ACCESSKEY: root
+  MINIO_SECRETKEY: "12345678"
+  # Nacos 配置里的 ${MINIO_ROOT_USER}/${MINIO_ROOT_PASSWORD} 需要在这里提供
+  MINIO_ROOT_USER: root
+  MINIO_ROOT_PASSWORD: "12345678"
+
+x-service-deps: &service-deps
+  nacos:
+    condition: service_healthy
+  mysql:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+  rabbitmq:
+    condition: service_healthy
+  minio:
+    condition: service_healthy
+
+# 业务服务健康检查的公共参数；各服务的 test 单独写（端口/路径不同）
+x-service-healthcheck: &service-healthcheck
+  interval: 5s
+  timeout: 5s
+  retries: 30
+  start_period: 60s
+
+# ---------------------------------------------------------------------------
+# 基础设施
+# ---------------------------------------------------------------------------
+services:
+  nacos:
+    image: qi-suo-nacos:latest
+    container_name: qisuo-nacos
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      MODE: standalone
+      NACOS_AUTH_ENABLE: "false"
+      TZ: Asia/Shanghai
+    ports:
+      - "${NACOS_PORT:-8848}:8848"
+      - "${NACOS_GRPC_PORT:-9848}:9848"
+    volumes:
+      - ./nacos/nacos/logs:/home/nacos/logs
+      - ./nacos/nacos/data:/home/nacos/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8848/nacos/v1/console/health/readiness"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    networks:
+      - qi-suo-net
+
+  mysql:
+    image: qi-suo-mysql:latest
+    container_name: qisuo-mysql
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      MYSQL_ROOT_PASSWORD: "1234"
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: qi-suo
+      TZ: Asia/Shanghai
+    command:
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_0900_ai_ci"
+      - "--default-time-zone=+08:00"
+    ports:
+      - "${MYSQL_PORT:-3307}:3306"
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/sql/qi-suo.sql:/docker-entrypoint-initdb.d/01-qi-suo.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+    networks:
+      - qi-suo-net
+
+  redis:
+    image: qi-suo-redis:latest
+    container_name: qisuo-redis
+    restart: unless-stopped
+    logging: *default-logging
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - ./redisvolume/qi-suo-redis/data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - qi-suo-net
+
+  rabbitmq:
+    image: qi-suo-mq:latest
+    container_name: qisuo-mq
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      RABBITMQ_DEFAULT_USER: cyj
+      RABBITMQ_DEFAULT_PASS: "12345"
+      RABBITMQ_DEFAULT_VHOST: qi-suo
+      TZ: Asia/Shanghai
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    networks:
+      - qi-suo-net
+
+  minio:
+    image: qi-suo-minio:lastest
+    container_name: qisuo-minio
+    restart: unless-stopped
+    logging: *default-logging
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: root
+      MINIO_ROOT_PASSWORD: "12345678"
+      TZ: Asia/Shanghai
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      # - minio-data:/data
+      - ./minio/minio/qi-suo-minio/data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - qi-suo-net
+
+  # -------------------------------------------------------------------------
+  # 业务服务
+  # -------------------------------------------------------------------------
+  gateway:
+    <<: *service-common
+    image: qi-suo-gateway:latest
+    container_name: qisuo-gateway
+    environment: *service-env
+    depends_on:
+      nacos:
+        condition: service_healthy
+      # 等后端全部注册进 Nacos 再启动网关，否则路由会返回 503 Service Unavailable
+      auth:
+        condition: service_healthy
+      user:
+        condition: service_healthy
+      merchant:
+        condition: service_healthy
+      admin:
+        condition: service_healthy
+      file:
+        condition: service_healthy
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+
+  auth:
+    <<: *service-common
+    image: qi-suo-auth:latest
+    container_name: qisuo-auth
+    environment: *service-env
+    depends_on: *service-deps
+    healthcheck:
+      <<: *service-healthcheck
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8082/api/auth/health"]
+    ports:
+      - "${AUTH_PORT:-8082}:8082"
+
+  user:
+    <<: *service-common
+    image: qi-suo-user:latest
+    container_name: qisuo-user
+    environment: *service-env
+    depends_on: *service-deps
+    healthcheck:
+      <<: *service-healthcheck
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8085/health"]
+    ports:
+      - "${USER_PORT:-8085}:8085"
+
+  merchant:
+    <<: *service-common
+    image: qi-suo-merchant:latest
+    container_name: qisuo-merchant
+    environment: *service-env
+    depends_on: *service-deps
+    healthcheck:
+      <<: *service-healthcheck
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8084/health"]
+    ports:
+      - "${MERCHANT_PORT:-8084}:8084"
+
+  admin:
+    <<: *service-common
+    image: qi-suo-admin:latest
+    container_name: qisuo-admin
+    environment: *service-env
+    depends_on: *service-deps
+    healthcheck:
+      <<: *service-healthcheck
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8081/health"]
+    ports:
+      - "${ADMIN_PORT:-8081}:8081"
+
+  file:
+    <<: *service-common
+    image: qi-suo-file:latest
+    container_name: qisuo-file
+    environment: *service-env
+    depends_on: *service-deps
+    healthcheck:
+      <<: *service-healthcheck
+      # 文件服务的健康接口只接受 POST
+      test: ["CMD", "curl", "-fsS", "-X", "POST", "http://127.0.0.1:8083/api/file/health"]
+    ports:
+      - "${FILE_PORT:-8083}:8083"
+
+  # -------------------------------------------------------------------------
+  # 前端静态资源 + 反向代理
+  # -------------------------------------------------------------------------
+  nginx:
+    image: qi-suo-nginx:latest
+    container_name: qisuo-nginx
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      gateway:
+        condition: service_started
+    ports:
+      - "${NGINX_PORT:-8088}:80"
+    volumes:
+      - ./nginx/volumes/config/nginx.conf:/etc/nginx/nginx.conf:ro
+      # 前端在独立仓库，路径按你本机实际情况调整
+      - ./nginx/volumes/dist:/usr/share/nginx/html:ro
+    networks:
+      - qi-suo-net
+
+# ---------------------------------------------------------------------------
+# volumes:
+#   mysql-data: ./mysql/volume
+#   redis-data: ./redis/volume
+#   rabbitmq-data: ./mq/volume
+#   minio-data: ./minio/volume
+
+volumes:
+  # mysql-data:
+  # redis-data: 
+  rabbitmq-data: 
+  # minio-data: 
+
+
+networks:
+  qi-suo-net:
+    external: true
+    name: qi-suo-net

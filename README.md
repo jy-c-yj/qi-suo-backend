@@ -4,6 +4,7 @@
 
 前端（Vue 3 + Vite + Element Plus）在独立仓库[**qi-suo-front**](https://github.com/jy-c-yj/qi-suo-front)。
 
+展示连接：[qi-suo](http://www.cyjyc.top)
 ## 技术栈
 
 | 类别 | 选型 |

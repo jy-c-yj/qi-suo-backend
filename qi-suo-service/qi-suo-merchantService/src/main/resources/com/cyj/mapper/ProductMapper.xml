@@ -166,7 +166,11 @@
         p.is_new AS isNew,
         p.rating,
         p.sales_count AS salesCount,
-        p.view_count AS viewCount
+        p.view_count AS viewCount,
+        /* MySQL 8 要求 DISTINCT 查询的 ORDER BY 字段必须出现在 SELECT 列表中，
+           默认排序用的是 created_at，所以这里必须带上；DVO 没有对应字段，
+           MyBatis 自动映射会忽略它 */
+        p.created_at AS createdAt
         FROM
         product p
         LEFT JOIN merchant m ON p.merchant_id = m.merchant_id
